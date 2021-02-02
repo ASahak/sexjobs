@@ -1,0 +1,134 @@
+<html>
+    <head>
+        <style>
+            .main-wrap-scrollify {
+                display: flex;
+                height: 100px;
+                border: 1px solid;
+                width: 200px;
+                position: relative;
+            }
+            .left-side, .right-side {
+                width: 50%;
+                max-height: 100%;
+                overflow-x: hidden;
+                position: relative;
+                padding-bottom: 33px;
+                padding-top: 33px;
+                scroll-behavior: smooth;
+            }
+            .left-side p, .right-side p{
+                height: 20px;
+                line-height: 20px;
+                margin: 0;
+                padding: 7px 0;
+            }
+            .main-wrap-scrollify:after {
+                height: 30px;
+                border-bottom: 2px solid;
+                border-top: 2px solid;
+                content: "";
+                top: 0;
+                bottom: 0;
+                margin: auto;
+                position: absolute;
+                left: 0;
+                width: 100%;
+                z-index: -1;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main-wrap-scrollify">
+            <div class="left-side">
+                <p>10</p>
+                <p>11</p>
+                <p>12</p>
+                <p>13</p>
+                <p>14</p>
+                <p>15</p>
+                <p>16</p>
+                <p>17</p>
+                <p>18</p>
+                <p>19</p>
+                <p>20</p>
+                <p>21</p>
+                <p>22</p>
+            </div>
+            <div class="right-side">
+                <p>10</p>
+                <p>20</p>
+                <p>30</p>
+                <p>40</p>
+                <p>50</p>
+                <p>00</p>
+            </div>
+        </div>
+    <script>
+
+        const left = document.querySelector('.left-side')
+        const right = document.querySelector('.right-side');
+
+        let touchEnd = true, scrollEnd, allowScroll = false;
+        let a = true
+        const scrollStop = function (el, callback) {
+            // Make sure a valid callback was provided
+            if (!callback || typeof callback !== 'function') return;
+            // Setup scrolling variable
+            let isScrolling;
+            // Listen for scroll events
+            el.addEventListener('touchmove', function (event) {
+                allowScroll = false;
+                a = false
+                touchEnd = true
+            })
+            el.addEventListener('touchend', function (event) {
+                touchEnd = true
+                allowScroll = true
+                a && callback();
+                a = false
+            })
+            el.addEventListener('scroll', function (event) {
+                // Clear our timeout throughout the scroll
+                clearTimeout(isScrolling);
+                // Set a timeout to run after scrolling ends
+                isScrolling = setTimeout(function() {
+                    a = true
+                    // Run the callback
+                    if(allowScroll && touchEnd) {
+                        callback();
+                    }
+                }, 66);
+            }, false);
+        };
+
+        [left].forEach(el => {
+            scrollStop(el, function () {
+                console.log("End", touchEnd);
+                const index = Math.abs(Math.ceil((el.scrollTop - 12) / 34));
+                el.scrollTo(0, index * 34)
+                touchEnd = false
+            });
+        });
+        //     let lastY = null, checkIfTheSame = null;
+        //     let id = null;
+        //     el.addEventListener('scrollend', function (event) {
+        //     el.addEventListener('scroll', function (event) {
+        //         // console.log(event.target.scrollTop);
+        //         console.log(id);
+        //         if(id) {
+        //             clearTimeout(id)
+        //             id = null
+        //         }
+        //         id = setTimeout(() => {
+        //             console.log('end');
+        //             el.scrollTo(0, 10)
+        //         }, 60)
+        //     })
+        //
+        //
+        // })
+
+    </script>
+    </body>
+</html>
