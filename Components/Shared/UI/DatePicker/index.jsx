@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom'
 import PropTypes from 'prop-types';
 import UseStyles from './styles';
 import {UiGenerateMargin, UIGetMarginLeftRight} from 'utils/handlers';
-import useDevice from 'hooks/use-media-device';
 import DateFnsUtils from '@date-io/date-fns';
 import {isToday, isYesterday, isTomorrow, addDays, isPast} from 'date-fns'
 import {
@@ -16,8 +15,8 @@ import {
     useLabelStyles,
     usePickerPaperStyles,
 } from '../makeStylesUI';
-import Actions from './elements/actions';
-import variablesJSS from 'static/styles/jss/variables';
+import Actions from './components/actions';
+import variablesJSS from 'static/styles/jss/abstracts/variables';
 const canUseDOM = (typeof window !== 'undefined');
 React.useLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
 
@@ -29,7 +28,6 @@ const convertDateToDays = (date) => {
 }
 
 const DatePicker = (props) => {
-    const {deviceType} = useDevice();
     const [isMobile, setIsMobile] = useState(false);
     const [disablePrevBtn, setDisablePrevBtn] = useState(false);
     const [selectedDate, setSelectedDate] = useState({
@@ -37,15 +35,16 @@ const DatePicker = (props) => {
         selected: null,
     });
     const [datePickerOwnError, setDatePickerOwnError] = useState(null);
-    const [marginBottom, setMarginBottom] = useState('0px');
+    const [marginBottom, setMarginBottom] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [allowTransition, setAllowTransition] = useState(false);
     const parentRef = useRef();
     const errorRef = useRef();
     const bottomWrapRef = useRef();
     const inputWrapperRef = useRef();
-    const styles = UseStyles();
+    const styles = UseStyles({}, {link: true});
 
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
     const currentDate = useCallback(() => {
@@ -64,7 +63,8 @@ const DatePicker = (props) => {
         return {
             backgroundColor,
             boxShadow,
-            marginBottom: marginBottom,
+            transition: allowTransition ? 'margin-bottom 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)' : '0s',
+            marginBottom: marginBottom || '0px',
             isDark: props.theme === 'dark',
             valueColor: props.theme === 'dark' ? variablesJSS.$datepicker.$dark.$textColor : variablesJSS.$datepicker.$textColor,
             actionsColor: props.theme === 'dark' ? variablesJSS.$datepicker.$dark.$actionsColor : variablesJSS.$datepicker.$actionsColor,
@@ -75,7 +75,7 @@ const DatePicker = (props) => {
             iconColor: props.theme === 'dark' ? variablesJSS.$input.$theme.$darkColor : '#000',
             dayNearly: convertDateToDays(currentDate()),
         }
-    }, [isOpen, props.size, props.theme, currentDate, marginBottom, selectedDate, props.value]);
+    }, [isOpen, props.size, props.theme, currentDate, marginBottom, selectedDate, props.value, allowTransition]);
 
     const classesDatePaper = usePickerPaperStyles(sharedPropsOfClasses);
 
@@ -87,10 +87,10 @@ const DatePicker = (props) => {
     const classesDatePicker = useDatePickerStyles(sharedPropsOfClasses);
 
     useEffect(() => { // Detect if device is Mobile
-        if (deviceType === 'mobile') {
+        if (props.deviceType === 'mobile') {
             setIsMobile(true)
         } else setIsMobile(false)
-    }, [deviceType])
+    }, [props.deviceType])
 
 
     useEffect(() => { // Calculate Margin Bottom
@@ -106,6 +106,12 @@ const DatePicker = (props) => {
         } else setDisablePrevBtn(false);
     }, [selectedDate, currentDate, props.value, props.shouldDisablePastDate])
 
+    useEffect(() => {
+        if(marginBottom) {
+            setAllowTransition(true)
+        }
+    }, [marginBottom])
+
     const handleDateChange = (date) => {
         setSelectedDate({
             selected: selectedDate.selected,
@@ -113,7 +119,7 @@ const DatePicker = (props) => {
         })
     };
 
-    const inlineStylesParent = useMemo(() => { // Set inline styles on the main Wrapper
+    const inlineStylesParent = useMemo(() => { // Set inline styles on the Main Wrapper
         return {
             ...generateMarginDiv(),
             width: props.fullWidth ? `calc(100% - ${UIGetMarginLeftRight(props.margin)}px)` : props.width,
@@ -151,6 +157,7 @@ const DatePicker = (props) => {
                 })
             }
             setIsOpen(false);
+            props.change(selectedDate.changed)
         }
         if (isOpen && container) {
             const actionsWrap = document.createElement('DIV');
@@ -175,7 +182,8 @@ const DatePicker = (props) => {
             setSelectedDate({
                 selected: date,
                 changed: date,
-            })
+            });
+            props.change(date);
         };
         return (
             <div className={'arrows-slide-datepicker'}>
@@ -210,7 +218,7 @@ const DatePicker = (props) => {
                 <div ref={inputWrapperRef} className={'input-element-wrapper'} style={props.customStylesInput}>
                     <KeyboardDatePicker
                         InputAdornmentProps={{ position: "start" }}
-                        keyboardIcon={<span className={'icon-calendar'}></span>}
+                        keyboardIcon={<span className={'icon-Event'}></span>}
                         classes={classesDatePicker}
                         onError={(err) => err && setDatePickerOwnError(err)}
                         InputLabelProps={{
@@ -259,6 +267,8 @@ const DatePicker = (props) => {
                         fullWidth
                         disabled={props.disabled}
                         open={isOpen}
+                        // name={props.name}
+                        // rules={props.rules}
                         inputVariant="filled"
                         variant={'inline'}
                         format={props.format}
@@ -286,6 +296,7 @@ DatePicker.defaultProps = {
     width: 310,
     shouldDisablePastDate: true,
     slideByArrows: false,
+    deviceType: 'desktop',
 };
 DatePicker.propTypes = {
     format: PropTypes.string,
@@ -297,7 +308,6 @@ DatePicker.propTypes = {
     direction: PropTypes.string,
     fullWidth: PropTypes.bool,
     size: PropTypes.string,
-    refBind: PropTypes.any,
     label: PropTypes.object,
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     errors: PropTypes.string,
@@ -310,5 +320,6 @@ DatePicker.propTypes = {
         PropTypes.string,
         PropTypes.object,
     ]),
+    deviceType: PropTypes.string.isRequired,
 };
 export default React.memo(DatePicker);

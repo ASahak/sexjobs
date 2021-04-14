@@ -9,6 +9,10 @@ import SimpleDialog from './Dialog';
 import Phone from './PhoneMask';
 import RangeSlider from './InputRange';
 import Tag from './Tag';
+import InlineToast from './InlineNotification';
+import Avatar from './Avatar';
+import DateOfBirth from './DateOfBirth';
+import Switch from './Switch';
 
 export {
     Button,
@@ -22,4 +26,8 @@ export {
     Phone,
     RangeSlider,
     Tag,
+    InlineToast,
+    Avatar,
+    DateOfBirth,
+    Switch,
 }

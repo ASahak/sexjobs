@@ -2,41 +2,49 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import PropTypes from 'prop-types';
 import UseStyles from './styles';
 import {UiGenerateMargin, UIGetMarginLeftRight} from 'utils/handlers';
-import useDevice from 'hooks/use-media-device';
 import InputMask from 'react-input-mask';
 import {
     useAutoCompleteStyles,
     useFormControlStyles,
     useLabelStyles,
 } from '../makeStylesUI';
-import variablesJSS from 'static/styles/jss/variables';
+import variablesJSS from 'static/styles/jss/abstracts/variables';
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import TextField from "@material-ui/core/TextField";
-import variables from "static/styles/jss/variables";
+import variables from "static/styles/jss/abstracts/variables";
 import InputLabel from "@material-ui/core/InputLabel";
 import FormControl from "@material-ui/core/FormControl";
 import InputAdornment from '@material-ui/core/InputAdornment';
-import {addMinutes, isAfter} from 'date-fns';
 import 'rmc-picker/assets/index.css';
 import MobileTimePicker from 'rmc-picker/lib/Picker';
 import Dialog from '@material-ui/core/Dialog';
+import {useSelector} from 'react-redux';
+import {baseSelector} from 'store/reselect';
 const canUseDOM = (typeof window !== 'undefined');
 React.useLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
 
+const generateTime = (time) => {
+    return {
+        hour: time.split(':')[0],
+        minute: time.split(':')[1],
+    }
+}
 const TimePicker = (props) => {
-    const {deviceType} = useDevice();
+    const baseState = useSelector(baseSelector());
+    const {deviceType} = baseState.deviceParams;
     const [options, setOptions] = useState([]);
     const [mobileDate, setMobileDate] = useState({
         hour: null,
         minute: null,
     });
     const [isMobile, setIsMobile] = useState(false);
+    const [allowTransition, setAllowTransition] = useState(false);
     const [disableBtn, setDisableBtn] = useState({
         prev: false,
         next: false,
     });
     const [time, setTime] = useState(null);
-    const [marginBottom, setMarginBottom] = useState('0px');
+    const [marginBottom, setMarginBottom] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
     const [propsOfStyles, setPropsOfStyles] = useState({})
     const [autocompleteValue, setAutocompleteValue] = useState({})
@@ -46,7 +54,7 @@ const TimePicker = (props) => {
     const maskRef = useRef();
     const styles = UseStyles(propsOfStyles, {link: true});
 
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
 
@@ -61,7 +69,8 @@ const TimePicker = (props) => {
         return {
             backgroundColor,
             boxShadow,
-            marginBottom: marginBottom,
+            transition: allowTransition ? 'margin-bottom 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)' : '0s',
+            marginBottom: marginBottom || '0px',
             isDark: props.theme === 'dark',
             listItemColor: props.theme === 'dark' ? variables.$select.$dark.$textColor : variables.$select.$textColor,
             selectedItemColor: props.theme === 'dark' ? variables.$select.$dark.$selected.$color : variables.$select.$selected.$color,
@@ -74,7 +83,7 @@ const TimePicker = (props) => {
             isOpened: isOpen && !isMobile,
             iconColor: props.theme === 'dark' ? variablesJSS.$input.$theme.$darkColor : '#000',
         }
-    }, [isOpen, props.size, props.theme, marginBottom, props.value, isMobile]);
+    }, [isOpen, props.size, props.theme, marginBottom, props.value, isMobile, allowTransition]);
 
     const classesAutoComplete = useAutoCompleteStyles(sharedPropsOfClasses);
 
@@ -103,12 +112,6 @@ const TimePicker = (props) => {
     }, [props.theme])
 
     useEffect(() => { // Generate Options
-        const generateTime = (time) => {
-            return {
-                hour: time.split(':')[0],
-                minute: time.split(':')[1],
-            }
-        }
         const getTime = {
             start: {
                 ...generateTime(props.options.start)
@@ -120,25 +123,26 @@ const TimePicker = (props) => {
         let dateEnd = new Date();
         datePeriod.setHours(getTime.start.hour);
         datePeriod.setMinutes(getTime.start.minute);
+        datePeriod.setSeconds(0);
         dateEnd.setHours(getTime.end.hour);
         dateEnd.setMinutes(getTime.end.minute);
-        dateEnd = new Date(new Date(dateEnd).getTime() - props.options.interval * 1000 * 60)
-        let index = 0;
+        dateEnd.setSeconds(0);
+
         const dates = [];
-        while(!isAfter(datePeriod, dateEnd)) {
-            const newDate = addMinutes(new Date( null, null, null, getTime.start.hour, getTime.start.minute), +props.options.interval * index);
-            const option = newDate.getHours() + ':' + (newDate.getMinutes() < 10 ? '0' : '') + newDate.getMinutes();
+        while(!(datePeriod.getTime() > dateEnd.getTime())) {
+            let _hour = ('0' + datePeriod.getHours()).slice(-2);
+            if (datePeriod.getTime() >= dateEnd.getTime() && getTime.end.hour === '24') {
+                _hour = '24'
+            }
+            const option = _hour + ':' + ('0' + datePeriod.getMinutes()).slice(-2);
             dates.push({title: option, value: option});
-            const newDatePeriod = generateTime(option)
-            datePeriod.setHours(newDatePeriod.hour);
-            datePeriod.setMinutes(newDatePeriod.minute);
-            index++;
+            datePeriod = new Date(new Date(datePeriod).setMinutes(new Date(datePeriod).getMinutes() + (+props.options.interval)))
         }
         setOptions(dates);
     }, [props.options]);
 
     useEffect(() => { // Detect if device is Mobile
-        if (deviceType === 'mobile') {
+        if (deviceType === 'mobile' || deviceType === 'tablet') {
             setIsMobile(true)
         } else setIsMobile(false)
     }, [deviceType])
@@ -155,25 +159,48 @@ const TimePicker = (props) => {
 
     useEffect(() => { // Disable the prev/next buttons
         if(time === null && props.value) {
-            setTime(props.value);
+            setTime(props.value.value);
             setAutocompleteValue({
-                title: props.value,
-                value: props.value,
+                title: props.value.title,
+                value: props.value.value,
             })
         }
 
-        const value = time !== null ? time : props.value || '';
-        if (isMobile) setMobileDate({
-            hour: value.split(':')[0],
-            minute: value.split(':')[1],
-        })
+        const value = time !== null ? time : props.value?.value || '';
+        if (value) {
+            if (isMobile) setMobileDate({
+                hour: value.split(':')[0],
+                minute: value.split(':')[1],
+            })
 
-        const findIndex = options.findIndex(e => e.value === value);
-        setDisableBtn({
-            prev: findIndex <= 0 || value && findIndex < 0,
-            next: findIndex >= options.length - 1 || value && findIndex < 0,
-        })
+            const findIndex = options.findIndex(e => e.value === value);
+            setDisableBtn({
+                prev: findIndex <= 0 || value && findIndex < 0,
+                next: findIndex >= options.length - 1 || value && findIndex < 0,
+            })
+        }
     }, [props.value, options, time, isMobile])
+
+    useEffect(() => {
+        if (props.value) {
+            const _value = typeof props.value === 'string';
+            setAutocompleteValue({
+                title: _value ? props.value : props.value.title,
+                value: _value ? props.value : props.value.value,
+            })
+            setTime(_value ? props.value : props.value.value)
+            if (isMobile) setMobileDate({
+                hour: (_value ? props.value : props.value.title).split(':')[0],
+                minute: (_value ? props.value : props.value.title).split(':')[1],
+            })
+        }
+    }, [props.value])
+
+    useEffect(() => {
+        if (marginBottom) {
+            setAllowTransition(true)
+        }
+    }, [marginBottom])
 
     const inputMaskChange = (evt) => {
         setTime(evt.target.value)
@@ -193,7 +220,8 @@ const TimePicker = (props) => {
         setAutocompleteValue({
             title,
             value,
-        })
+        });
+        props.change({title, value})
     }
 
     const selectMobileTime = () => {
@@ -204,6 +232,7 @@ const TimePicker = (props) => {
             value: _time,
         })
         setIsOpen(false);
+        props.change({title: _time, value: _time})
     }
 
     const mobilePickerValueChange = (val, type) => {
@@ -215,10 +244,12 @@ const TimePicker = (props) => {
 
     const handleTimePickerClose = () => {
         setIsOpen(false)
-        setMobileDate({
-            hour: time.split(':')[0],
-            minute: time.split(':')[1],
-        })
+        if(time) {
+            setMobileDate({
+                hour: time.split(':')[0],
+                minute: time.split(':')[1],
+            })
+        }
     }
 
     const LabelProps = useMemo(() => ({
@@ -240,6 +271,7 @@ const TimePicker = (props) => {
                     title: _value,
                     value: _value,
                 })
+                props.change({title: _value, value: _value})
             } else if (!disableBtn.next && dir === 'next') {
                 const _value = options[currentIndex > -1 ? currentIndex + 1 : 0].value;
                 setTime(_value)
@@ -247,6 +279,7 @@ const TimePicker = (props) => {
                     title: _value,
                     value: _value,
                 })
+                props.change({title: _value, value: _value})
             }
         };
         return (
@@ -301,10 +334,10 @@ const TimePicker = (props) => {
                     {() => <TextField
                         onClick={() => isMobile && setIsOpen(true)}
                         InputProps={{
-                            disabled:props.disabled,
+                            disabled: props.disabled,
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <span className="icon-clock"></span>
+                                    <span className="icon-Time"></span>
                                 </InputAdornment>
                             ),
                             endAdornment: (props.slideByArrows ? <InputAdornment position="end">
@@ -340,7 +373,7 @@ const TimePicker = (props) => {
                     disableListWrap={false}
                     classes={classesAutoComplete}
                     options={options}
-                    getOptionSelected={(option, value) => option.title === value.title}
+                    getOptionSelected={(option, value) => option.value === value.value}
                     renderOption={(option) => <div>{option.title}</div>}
                     getOptionLabel={(option) => option.title}
                     open={isOpen}
@@ -348,8 +381,8 @@ const TimePicker = (props) => {
                     onClose={() => setIsOpen(false)}
                     onChange={selectTime}
                     inputValue={time || ''}
-                    value={{title: autocompleteValue.title || '', value: autocompleteValue.value || ''}}
-                    defaultValue={props.value ? {title: props.value || '', value: props.value || ''} : null}
+                    value={autocompleteValue.value ? {title: autocompleteValue.title || '', value: autocompleteValue.value || ''} : null}
+                    defaultValue={props.value ? {title: props.title || '', value: props.value || ''} : null}
                     renderInput={(params) => <TextField inputRef={inputRef} {...params} variant="filled" focused={false}/> }
                 />}
             </div>
@@ -375,7 +408,6 @@ TimePicker.propTypes = {
     direction: PropTypes.string,
     fullWidth: PropTypes.bool,
     size: PropTypes.string,
-    refBind: PropTypes.any,
     label: PropTypes.object,
     options: PropTypes.shape({
         start: PropTypes.string,
@@ -385,7 +417,6 @@ TimePicker.propTypes = {
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     errors: PropTypes.string,
     change: PropTypes.func,
-    shouldDisablePastDate: PropTypes.bool,
     margin: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
     value: PropTypes.oneOfType([
         PropTypes.string,

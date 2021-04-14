@@ -1,5 +1,5 @@
 import {createUseStyles} from 'react-jss'
-// import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
 
 export default createUseStyles( {
     'tag-wrapper': {
@@ -56,7 +56,7 @@ export default createUseStyles( {
             '& .with-x': {
                 marginLeft: '10px',
                 fontSize: '13px',
-                color: '#C7C7C7',
+                color: variables.$helperTextColor,
             }
         },
     },

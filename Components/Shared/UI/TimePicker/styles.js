@@ -1,5 +1,6 @@
 import {createUseStyles} from 'react-jss'
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
+import {Shadow} from 'static/styles/jss/abstracts/mixins';
 
 export default createUseStyles({
     'bottom-wrap': {
@@ -7,7 +8,7 @@ export default createUseStyles({
         position: 'absolute',
         bottom: '0px',
         fontSize: '11px',
-        color: '#C7C7C7',
+        color: variables.$helperTextColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -22,13 +23,14 @@ export default createUseStyles({
         left: '0',
         bottom: '0px',
         display: 'inline-block',
-        transition: 'all 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        transition: props => props.transition,
         fontSize: '11px',
         lineHeight: '14px',
         color: variables.$danger,
         width: '100%',
     },
     'timepicker-dialog': {
+        zIndex: '999999 !important',
         backgroundColor: props => props.overlayBG,
     },
     'mobile-wheel-picker': {
@@ -38,7 +40,7 @@ export default createUseStyles({
         fontFamily: 'Arial',
         backgroundColor: props => props.backgroundColor,
         border: props => props.border,
-        boxShadow: '0 24px 38px 3px rgb(0 0 0 / 14%), 0 9px 46px 8px rgb(0 0 0 / 12%), 0 11px 15px -7px rgb(0 0 0 / 20%)',
+        ...Shadow('0 24px 38px 3px rgb(0 0 0 / 14%), 0 9px 46px 8px rgb(0 0 0 / 12%), 0 11px 15px -7px rgb(0 0 0 / 20%)'),
         padding: '24px',
         display: 'flex',
         flexDirection: 'column',
@@ -51,27 +53,27 @@ export default createUseStyles({
         '& .pickers-wrapper': {
             display: 'flex',
             alignItems: 'center',
-            height: '100%',
             position: 'relative',
+            height: '139px',
+            overflow: 'hidden',
             '&::after': {
                 content: '":"',
                 position: 'absolute',
                 left: '0',
+                bottom: '0',
                 right: '0',
                 margin: 'auto',
                 width: '8px',
                 fontSize: '24px',
                 fontWeight: 'bold',
                 height: '37px',
-                top: '0',
-                bottom: '0',
+                top: '0px',
                 color: props => props.textColor,
             },
             '& .rmc-picker': {
-                height: '80%',
-                '& .rmc-picker-mask': {
-                    background: 'none !important',
-                },
+                height: '141px',
+                width: '50%',
+                flex: 'initial',
                 '& .rmc-picker-indicator': {
                     height: '47px',
                     borderTop: '2PX solid #3B83D7',
@@ -79,16 +81,12 @@ export default createUseStyles({
                     right: '0',
                     margin: 'auto',
                     width: '60%',
+                    top: '47px !important',
                 },
                 '& .rmc-picker-item': {
                     height: '47px',
                     lineHeight: '47px',
-                    color: props => props.selectedItem,
-                    fontSize: '24px',
-                    fontWeight: '400',
                     transition: '.1s',
-                },
-                '& .rmc-picker-item-selected': {
                     fontSize: '24px',
                     fontWeight: 'bold',
                     color: props => props.textColor,

@@ -1,18 +1,19 @@
 import {createUseStyles} from 'react-jss'
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
+import {Shadow} from 'static/styles/jss/abstracts/mixins';
 
 export default createUseStyles({
     'input-styles_extend': {
         fontFamily: 'Arial',
         boxSizing: 'border-box',
         width: '100%',
-        transition: 'all 400ms cubic-bezier(0.04, 1.1, 1, 0.99)',
         position: 'relative',
         borderRadius: variables.$input.$radius,
         border: 'none',
         zIndex: 2,
         fontSize: variables.$input.$fontSize + 'px',
         display: 'flex',
+        transitionProperty: 'margin-bottom, box-shadow',
         '&:hover': {
             ...variables.$input.$hover,
         },
@@ -37,6 +38,7 @@ export default createUseStyles({
         '& label': {
             fontWeight: '600',
             paddingBottom: '7px',
+            marginBottom: '0',
             color: props => props.labelColor,
         },
         '& .error-line': {
@@ -45,7 +47,7 @@ export default createUseStyles({
             left: '0',
             bottom: '0px',
             display: 'inline-block',
-            transition: 'all 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            transition: props => props.transition,
             fontSize: '11px',
             lineHeight: '14px',
             color: variables.$danger,
@@ -58,7 +60,7 @@ export default createUseStyles({
             position: 'absolute',
             bottom: '0px',
             fontSize: '11px',
-            color: '#C7C7C7',
+            color: variables.$helperTextColor,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -75,6 +77,7 @@ export default createUseStyles({
         '& .input-element-wrapper': {
             flexWrap: 'nowrap',
             extend: 'input-styles_extend',
+            transition: props => props.transition,
             padding: props => props.padding,
             marginBottom: props => props.marginBottom,
             backgroundColor: props => props.backgroundColor,
@@ -201,7 +204,7 @@ export default createUseStyles({
             },
             '& .input-element-wrapper': {
                 marginBottom: props => props.marginBottom,
-                boxShadow: '0 0 1px 1px '+ variables.$danger + ' inset !important',
+                ...Shadow('0 0 1px 1px '+ variables.$danger + ' inset !important'),
                 paddingRight: '25px !important',
             },
         },

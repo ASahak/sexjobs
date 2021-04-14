@@ -1,5 +1,6 @@
 import {makeStyles} from "@material-ui/core/styles";
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
+import {MediaQuery, Shadow} from 'static/styles/jss/abstracts/mixins';
 
 const sharedProps = {
     overflowThumb: {
@@ -13,7 +14,7 @@ const sharedProps = {
         },
         '&::-webkit-scrollbar-thumb': {
             borderRadius: '10px',
-            background: '#C7C7C7',
+            background: variables.$helperTextColor,
         },
     },
     disableNoneLayer: {
@@ -66,7 +67,7 @@ const useFormControlStyles = makeStyles((theme) => ({
                 position: 'relative',
                 zIndex: '22',
                 '& .MuiInputBase-root': {
-                    transition: '.4s',
+                    transition: props => props.transition,
                     marginBottom: props => props.marginBottom,
                     boxShadow: props => props.boxShadow,
                     color: props => props.valueColor,
@@ -101,7 +102,7 @@ const useFormControlStyles = makeStyles((theme) => ({
                         },
                         margin: 0,
                         position: 'absolute',
-                        '& .icon-clock': {
+                        '& .icon-Time': {
                             color: variables.$datepicker.$iconColor,
                             fontSize: props => variables.$datepicker['$' + props.size].$iconSize,
                         },
@@ -140,7 +141,7 @@ const useFormControlStyles = makeStyles((theme) => ({
             },
             '&.focused-input': {
                 '& .MuiInputBase-root': {
-                    boxShadow: 'none !important'
+                    ...Shadow('none !important'),
                 }
             },
             '& .MuiAutocomplete-root': {
@@ -156,13 +157,16 @@ const useFormControlStyles = makeStyles((theme) => ({
 }));
 
 const usePopoverStyles = makeStyles(() => ({
+    root: {
+        zIndex: '99999 !important',
+    },
     paper: {
         transitionDuration: '0s !important',
         backgroundColor: props => props.backgroundColor,
         borderRadius: '0 0 ' + variables.$input.$radius + ' ' + variables.$input.$radius,
         border: props => props.isDark ? '1px solid ' + variables.$select.$dark.$borderColor : 'none',
         marginLeft: props => props.marginLeft,
-        boxShadow: '0px 2px 2.5px 0px rgb(0 0 0 / 45%)',
+        ...Shadow('0px 2px 2.5px 0px rgb(0 0 0 / 45%)'),
         marginTop: props => props.paperMarginTop,
         '& .MuiList-root': {
             ...sharedProps.overflowThumb,
@@ -195,15 +199,31 @@ const useSelectStyles = makeStyles(() => ({
         },
         width: '100%',
         marginTop: '0px !important',
-        transition: '.4s',
+        transition: props => props.transition,
+        lineHeight: 'inherit !important',
         marginBottom: props => props.marginBottom,
         boxShadow: props => props.isOpened ? '0px 1px 2px 0px rgb(0 0 0 / 45%)' : 'none',
         borderRadius: props => props.isOpened ? variables.$input.$radius + ' ' + variables.$input.$radius + ' 0 0' : variables.$input.$radius,
         backgroundColor: props => props.backgroundColor || '#fff',
         zIndex: '22',
         '&.Mui-disabled': {
+            '& .select-custom-icon, & .MuiInputBase-input.Mui-disabled': {
+                color: variables.$input.$readOnlyColor + ' !important'
+            }
+        },
+        '& .select-custom-icon': {
+            fontSize: variables.$input.$iconSize + 'px',
+            top: 0,
+            bottom: 0,
+            margin: 'auto',
+            right: '7px',
+            position: 'absolute',
             pointerEvents: 'none',
-            ...sharedProps.disableNoneLayer,
+            width: '1em',
+            height: '1em',
+            display: 'inline-block',
+            flexShrink: '0',
+            userSelect: 'none',
         },
     },
     root: {
@@ -215,6 +235,17 @@ const useSelectStyles = makeStyles(() => ({
         transition: '.4s',
         backgroundColor: 'transparent !important',
         color: props => props.textColor,
+        '& .with-avatar-value-wrapper': {
+            paddingLeft: '35px',
+            position: 'relative',
+            '& > img': {
+                maxWidth: '30px',
+                maxHeight: '25px',
+                objectFit: 'cover',
+                position: 'absolute',
+                left: '0',
+            }
+        },
         '&[aria-expanded=\"true\"]': {
             ...variables.$input.$focus,
         },
@@ -232,10 +263,12 @@ const useSelectStyles = makeStyles(() => ({
         right: '4px'
     },
     disabled: {
+        pointerEvents: 'none',
     },
 }));
 const useLabelStyles = makeStyles(() => ({
     root: {
+        lineHeight: 'inherit',
         transform: 'translate(0px) !important',
         position: 'relative',
         fontSize: variables.$input.$fontSize,
@@ -328,14 +361,14 @@ const useAutoCompleteStyles = makeStyles(() => ({
     },
     popper: {
         border: props => props.isDark ? '1px solid ' + variables.$select.$dark.$borderColor : 'none',
-        boxShadow: '0px 2px 2.5px 0px rgb(0 0 0 / 45%)',
+        ...Shadow('0px 2px 2.5px 0px rgb(0 0 0 / 45%)'),
         borderRadius: '0 0 ' + variables.$input.$radius + ' ' + variables.$input.$radius,
         marginTop: props => props.paperMarginTop,
         boxSizing: 'content-box',
     },
     paper: {
         margin: '0',
-        boxShadow: 'none',
+        ...Shadow('none'),
         backgroundColor: props => (props.backgroundColor || '#fff') + '!important',
         borderRadius: '0',
         '& .MuiAutocomplete-noOptions': {
@@ -371,25 +404,6 @@ const useItemStyles = makeStyles(() => ({
             borderRadius: '50%',
             marginRight: props => variables.$select.$dropdown.$listItem['$' + props.size].$iconRight,
             overflow: 'hidden',
-            '& img': {
-                width: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center',
-                '&.till-loading': {
-                    transform: 'scale(3)',
-                },
-            },
-            '& .like-avatar': {
-                fontSize: '15px',
-                fontWeight: '600',
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: props => props.avatarBG,
-                color: props => props.avatarColor,
-            },
             '& span.icon': {
                 width: '100%',
                 height: '100%',
@@ -428,7 +442,7 @@ const usePickerPaperStyles = makeStyles(() => ({
             marginTop: '5px',
             backgroundColor: props => props.backgroundColor,
             border: props => props.isDark ? '1px solid #11509F' : 'none',
-            boxShadow: '0 2px 4px 0 rgba(0,0,0,0.5)',
+            ...Shadow('0 2px 4px 0 rgba(0,0,0,0.5)'),
             '& .MuiPickersCalendarHeader-daysHeader': {
                 '& .MuiTypography-root': {
                     color: props => props.weekColor,
@@ -488,7 +502,7 @@ const useDatePickerStyles = makeStyles(() => ({
             },
             width: '100%',
             marginTop: '0px !important',
-            transition: '.4s',
+            transition: props => props.transition,
             padding: '0',
             marginBottom: props => props.marginBottom,
             outline: 'none',
@@ -578,6 +592,7 @@ const useDatePickerStyles = makeStyles(() => ({
 
 const useDialogStyles = makeStyles(() => ({
     root: {
+        zIndex: '999999 !important',
         '& .MuiBackdrop-root': {
             backgroundColor: 'rgba(0, 0, 0, 0.6)',
         },
@@ -593,13 +608,14 @@ const useDialogStyles = makeStyles(() => ({
                 lineHeight: '19px',
                 margin: '0 2px',
                 padding: '8px 20px',
+                color: '#A2A2A2',
                 '&::-webkit-scrollbar': {
                     width: '8px',
                     backgroundColor: '#EFEFEF',
                 },
                 '&::-webkit-scrollbar-thumb': {
                     borderRadius: '10px',
-                    background: '#C7C7C7',
+                    background: variables.$helperTextColor,
                 },
             },
             '& .MuiDialogActions-root': {
@@ -654,8 +670,9 @@ const useRangeSliderStyles = makeStyles(() => ({
     thumb: {
         height: '22px !important',
         width: '22px !important',
+        marginLeft: '-11px',
         backgroundColor: '#B0F2F1',
-        boxShadow: '0 2px 4px 0 rgba(0,0,0,0.5) !important',
+        ...Shadow('0 2px 4px 0 rgba(0,0,0,0.5) !important'),
         marginTop: '-8px !important',
     },
     disabled: {
@@ -672,19 +689,42 @@ const useRangeSliderStyles = makeStyles(() => ({
 }));
 
 const useDropDownPopoverStyles = makeStyles(() => ({
+    root: {
+        zIndex: '99999 !important',
+    },
     paper: {
         margin: props => props.margin,
         transform: 'scale(1) !important',
-        boxShadow: '0 2px 4px 0 rgba(0,0,0,0.5)',
+        ...Shadow('0 2px 4px 0 rgba(0,0,0,0.5)'),
         borderRadius: '2px',
-        // transitionDuration: '0s !important',
         overflow: props => props.overflow,
+        '&.custom-notification-popover': {
+            ...MediaQuery.down({
+                margin: '20px 0px 0px 0px !important',
+                height: 'calc(100% - 60px) !Important',
+                left: '0px !important',
+                right: '0px !important',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                width: '100% !important',
+                maxWidth: '100% !important',
+                '@media (hover: hover)': {
+                    transitionDuration: '0s !important',
+                    width: 'calc(100% - 15px) !important',
+                    maxWidth: 'calc(100% - 15px) !important',
+                },
+                '&::after': {
+                    display: 'none',
+                },
+            }).xss,
+        },
         '&::after': {
             display: props => props.triangle || 'none',
             position: 'absolute',
             content: '""',
             top: '-8px',
-            right: '42px',
+            right: props => props.triangleRight,
             width: '0',
             height: '0',
             borderLeft: '10px solid transparent',
@@ -692,6 +732,23 @@ const useDropDownPopoverStyles = makeStyles(() => ({
             borderBottom: '10px solid #fff',
         }
     }
+}));
+
+const useSwitchStyles = makeStyles(() => ({
+    root: {
+        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+            backgroundColor: '#5C9DC2',
+        }
+    },
+    switchBase: {
+        color: '#BDBDBD'
+    },
+    track: {
+        backgroundColor: '#4D78B1',
+    },
+    checked: {
+        color: '#B0F2F1',
+    },
 }));
 
 export {
@@ -706,4 +763,5 @@ export {
     useDialogStyles,
     useRangeSliderStyles,
     useDropDownPopoverStyles,
+    useSwitchStyles,
 }

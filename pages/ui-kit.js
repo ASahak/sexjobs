@@ -29,15 +29,15 @@ const UiKit = (props) => {
         mode: 'onKeypress',
     });
     const selectOptions = [
-        {title: 'Ten', value: 101, avatar: '/images/avatar.png'},
+        {title: 'Ten', value: 101, imgPath: '/images/avatar.png'},
         {title: 'Twenty', value: 201},
         {title: 'Thirty', value: 30},
-        {title: 'Thirty 2', value: 309, avatar: '/images/avatar.png'},
-        {title: 'Thirty 3', value: 301, avatar: '/images/avatar.png'},
+        {title: 'Thirty 2', value: 309, imgPath: '/images/avatar.png'},
+        {title: 'Thirty 3', value: 301, imgPath: '/images/avatar.png'},
         {title: 'Thirty 4', value: 302},
-        {title: 'Thirty 5', value: 303, avatar: '/images/avatar.png'},
+        {title: 'Thirty 5', value: 303, imgPath: '/images/avatar.png'},
         {title: 'Thirty 6', value: 304},
-        {title: 'Thirty 7', value: 305, avatar: '/images/avatar.png'},
+        {title: 'Thirty 7', value: 305, imgPath: '/images/avatar.png'},
     ];
     const selectOptions2 = [
         {title: 'Ten', value: 101, icon: 'calendar'},
@@ -160,6 +160,7 @@ const UiKit = (props) => {
             </div>
             <div style={{display: 'flex'}}>
                 <RangeSlider
+                    style={{minWidth: '300px'}}
                     label={{title: "Label"}}
                     sizeOption="m"
                     helperText="Range Picker"
@@ -170,6 +171,7 @@ const UiKit = (props) => {
                     margin={[0, 10, 30, 0]}
                 />
                 <RangeSlider
+                    style={{minWidth: '300px'}}
                     label={{title: "Label"}}
                     margin={[0, 10, 30, 30]}
                     sizeOption="m"
@@ -184,7 +186,7 @@ const UiKit = (props) => {
             </div>
             <div style={{display: 'flex'}}>
                 <Button
-                    icon={{className: 'icon-menu', direction: 'left', loading: loadingIcon}}
+                    icon={{className: 'icon-Overflow-menu', direction: 'left', loading: loadingIcon}}
                     margin={[10, 10, 30, 0]}
                     size={'md'}
                     fullWidth={false}
@@ -414,7 +416,7 @@ const UiKit = (props) => {
             <div style={{display: 'flex'}}>
 
                 <Button
-                    icon={{className: 'icon-menu', direction: 'left', loading: loadingIcon}}
+                    icon={{className: 'icon-Overflow-menu', direction: 'left', loading: loadingIcon}}
                     margin={10}
                     size={'md'}
                     fullWidth={false}
@@ -573,7 +575,7 @@ const UiKit = (props) => {
                     refBind={register({
                         required: 'Please complete this mandatory field',
                     })}
-                    icon={{className: 'icon-cart'}}
+                    icon={{className: 'icon-Shopping-Cart'}}
                     // readonly={true}
                     // required={true}
                     fullWidth={false}
@@ -594,7 +596,7 @@ const UiKit = (props) => {
                     refBind={register({
                         required: 'Please complete this mandatory field Please complete this mandatory field Please complete this mandatory field',
                     })}
-                    icon={{className: 'icon-cart'}}
+                    icon={{className: 'icon-Shopping-Cart'}}
                     // readonly={true}
                     required={true}
                     fullWidth={false}

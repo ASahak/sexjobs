@@ -1,54 +1,45 @@
 import React, {useEffect, useState, useRef, useMemo, useCallback, useLayoutEffect} from 'react';
 import PropTypes from 'prop-types';
 import UseStyles from './styles';
-import variablesJSS from "static/styles/jss/variables";
+import variablesJSS from "static/styles/jss/abstracts/variables";
 import TextField from "@material-ui/core/TextField";
 import { UiGenerateMargin, UIGetMarginLeftRight } from 'utils/handlers';
 const canUseDOM = (typeof window !== 'undefined');
 React.useLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
 
+const calculateIconPosition = (inputRef) => { // Calculate Icon's position
+    if (inputRef) {
+        return `translateY(${((inputRef.getBoundingClientRect().height / 2) - variablesJSS.$input.$iconSize / 2)}px`
+    }
+}
+
 const Input = (props) => {
-    const [inputStyleProps, setInputStyleProps] = useState({});
+    const [allowTransition, setAllowTransition] = useState(false);
     const [inputRef, setInputRef] = useState(null);
     const [limitCount, setLimitCount] = useState(0);
+    const [marginBottom, setMarginBottom] = useState(null);
     const [icon, setIcon] = useState({});
     const [passwordTypeToggle, setPasswordTypeToggle] = useState(false);
-    const styles = UseStyles(inputStyleProps, {link: true});
+
+    const styles = UseStyles({
+        transition: allowTransition ? 'margin-bottom 400ms cubic-bezier(0.04, 1.1, 1, 0.99)' : '0s',
+        backgroundColor: [props.customStylesInput.background, '!important'],
+        border: props.customStylesInput.border,
+        labelColor: props.label && props.label.color || variablesJSS.$input.$baseColor,
+        iconTop: calculateIconPosition(inputRef),
+        marginBottom: marginBottom || '0px',
+    }, {link: true});
     const parentRef = useRef();
     const errorRef = useRef();
     const bottomWrapRef = useRef();
     const labelRef = useRef();
     const inputWrapperRef = useRef();
 
-
-    useLayoutEffect(() => { // Set Inline Styles and send to JSS
-        setInputStyleProps({
-            ...inputStyleProps,
-            backgroundColor: [props.customStylesInput.background, '!important'],
-            border: props.customStylesInput.border,
-            labelColor: props.label && props.label.color || variablesJSS.$input.$baseColor,
-            iconTop: (calculateIconPosition() - variablesJSS.$input.$iconSize / 2) + 'px',
-            marginBottom: calculateMarginBottom(),
-        })
-    }, [
-        props.customStylesInput,
-        props.errors,
-        props.label,
-        labelRef.current,
-        errorRef.current,
-        bottomWrapRef.current,
-        icon,
-        props.textArea,
-        props.helperText,
-        props.maxCounter,
-        props.transparentInput,
-        props.required])
-
     useEffect(() => { // Find and Set ref of Input/Textarea element
         if (parentRef.current) {
-            setInputRef(parentRef.current.querySelector(props.textArea? 'textarea' : 'input'))
+            setInputRef(parentRef.current.querySelector(props.textArea ? 'textarea' : 'input'))
         }
-    }, [parentRef.current, props])
+    }, [parentRef.current])
 
     useEffect(() => { // Set/Remove events
         if (parentRef.current && inputRef) {
@@ -71,8 +62,8 @@ const Input = (props) => {
     }, [props.events, inputRef])
 
     useEffect(() => { // Value Override
-        if (inputRef && !!props.value) {
-            inputRef.value = props.value
+        if (inputRef) {
+            inputRef.value = props.value || ''
         }
     }, [props.value, inputRef]);
 
@@ -94,45 +85,46 @@ const Input = (props) => {
     }, [props.maxCounter, props.value, inputRef])
 
     useEffect(() => { // Set Icon
-        if (props.readonly) {
+        if (props.readonly && !props.readonlyNoIcon && !props.icon) {
             setIcon({
-                className: 'icon-lock',
+                className: 'icon-Lock',
             })
         } else if (props.errors) {
             setIcon({
-                className: 'error-icon icon-warning',
+                className: 'error-icon icon-Alert',
             })
         } else if (props.type === 'password' && props.passwordEye) {
             setIcon({
-                className: 'icon-eye toggle-password' + (passwordTypeToggle ? ' icon-eye-blocked' : ''),
+                className: 'icon-Views toggle-password' + (passwordTypeToggle ? ' icon-eye-blocked' : ''),
                 onClick: togglePassword
             })
         } else if (props.icon) {
             setIcon({
+                ...(props.icon.template && {template: props.icon.template}),
                 className: props.icon.className + (props.icon.onClick ? ' clickable' : ''),
                 ...(props.icon.onClick && {onClick: props.icon.onClick}),
             })
         } else {
             setIcon({})
         }
-    }, [props.passwordEye, props.type, props.icon, props.errors, passwordTypeToggle, props.readonly]);
+    }, [props.passwordEye, props.type, props.icon, props.errors, passwordTypeToggle, props.readonly, props.readonlyNoIcon]);
+
+    useEffect(() => {
+        if (marginBottom) {
+            setAllowTransition(true)
+        }
+    }, [marginBottom])
 
     const togglePassword = useCallback(() => { // Toggle Password Eye Icon
         setPasswordTypeToggle(!passwordTypeToggle)
     }, [props.passwordEye, passwordTypeToggle]);
 
-    const calculateMarginBottom = useCallback(() => { // Calculate Margin Bottom
+    useEffect(() => { // Calculate Margin Bottom
         const bottomElementHeight = errorRef.current ? errorRef.current.offsetHeight + 2 :
             bottomWrapRef.current ? bottomWrapRef.current.offsetHeight + 2 : 0;
-        return bottomElementHeight /*marginTopBottom*/
-            - (props.transparentInput ? variablesJSS.$input.$transparentInput.$errorDefaultHeight - 4 : 0) + 'px'
+        setMarginBottom(bottomElementHeight /*marginTopBottom*/
+            - (props.transparentInput ? variablesJSS.$input.$transparentInput.$errorDefaultHeight - 4 : 0) + 'px')
     }, [props.required, props.errors, props.transparentInput, errorRef.current, props.helperText, props.maxCounter, bottomWrapRef.current])
-
-    const calculateIconPosition = useCallback(() => { // Calculate Icon's position
-        if (inputRef) {
-            return inputRef.offsetTop + (props.textArea ? 12 /*TextArea's middle padding*/ : inputRef.offsetHeight / 2)
-        }
-    }, [props.errors, inputRef, props.label, icon, props.textArea, props.transparentInput])
 
     const setAttributes = useCallback(() => { // Set all attributes
         if (props.attr && inputRef) {
@@ -146,10 +138,10 @@ const Input = (props) => {
         setLimitCount(inputRef.value.length)
     }, [inputRef]);
 
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
-    const inlineStylesParent = useMemo(() => { // Set inline styles on the main Wrapper
+    const inlineStylesParent = useMemo(() => { // Set inline styles on the Main Wrapper
         return {
             ...generateMarginDiv(),
             width: props.fullWidth ? `calc(100% - ${UIGetMarginLeftRight(props.margin)}px)` : props.width,
@@ -171,36 +163,29 @@ const Input = (props) => {
         props.margin]);
 
     const icons = useMemo(() => {
-        if (icon.className) return (
+        if (icon.template) return icon.template;
+        else if (icon.className) return (
             <i className={`${icon.className} input-icon`} onClick={icon.onClick}></i>
         )
     }, [props.icon, icon]);
-
+    //
     const generateClassNameParent = useMemo(() => {
-        return `${props.className} ${props.likeMaterialInput ? 'material-input-wrapper' : ''} ${props.transparentInput ? styles['transparent-input-wrap']: ''} ${styles[props.theme ? 'theme-' + props.theme : '']} ${styles['input-wrap']} ${icon ? styles['with-icon'] : ''} ${props.errors ? 'error-field' : ''} ${props.type === "checkbox" ? styles['wrap-with-checkbox'] : props.type === "radio" ? styles['wrap-with-radio'] : ''}`
-    }, [props.type, props.errors, props.theme, props.transparentInput, props.className]);
+        return `${props.size + '-parent-wrapper'} ${props.className} ${props.likeMaterialInput ? 'material-input-wrapper' : ''} ${props.transparentInput ? styles['transparent-input-wrap']: ''} ${styles[props.theme ? 'theme-' + props.theme : '']} ${styles['input-wrap']} ${icon.className ? styles['with-icon'] : ''} ${props.errors ? 'error-field' : ''} ${props.type === "checkbox" ? styles['wrap-with-checkbox'] : props.type === "radio" ? styles['wrap-with-radio'] : ''}`
+    }, [props.type, props.errors, props.theme, props.transparentInput, props.className, icon, props.size]);
 
     const label = useMemo(() => {
         if (props.label) {
             const textLabel = props.label.title + (props.required ? ' *' : '');
-            if ((props.type === 'radio' || props.type === 'checkbox') && inputRef && inputWrapperRef.current && labelRef.current) {
-                labelRef.current.innerHTML = textLabel;
-                inputWrapperRef.current.innerHTML = '';
-                const checkBoxWrap = document.createElement('SPAN');
-                checkBoxWrap.className = 'checkbox-wrap';
-                inputWrapperRef.current.appendChild(inputRef);
-                inputWrapperRef.current.appendChild(checkBoxWrap);
-                labelRef.current.appendChild(inputWrapperRef.current);
-            }
             return (
                 <label
                     ref={labelRef}
-                    htmlFor={props.type === "checkbox" ? props.name : null}
+                    htmlFor={(props.type === "checkbox" || props.type === "radio") ? props.label.forId : null}
                     className={'label-' + props.size}
-                >{textLabel}</label>
+                    dangerouslySetInnerHTML={{__html: textLabel}}
+                ></label>
             )
         }
-    }, [props.required, props.label, inputWrapperRef.current, inputRef]);
+    }, [props.type, props.required, props.label, labelRef.current]);
 
     const bottomWrap = useMemo(() => {
         if ((props.maxCounter || props.helperText || props.required) && !props.errors) {
@@ -221,7 +206,7 @@ const Input = (props) => {
              className={generateClassNameParent}
              ref={parentRef}>
             {label}
-            <div ref={inputWrapperRef} className={'input-element-wrapper'}>
+            <div ref={inputWrapperRef} className="input-element-wrapper">
                 {props.textArea ? <textarea
                     name={props.name}
                     cols={props.textArea.cols || 30}
@@ -249,9 +234,12 @@ const Input = (props) => {
                     className={'input-' + props.size}
                     ref={props.refBind}
                     type={(passwordTypeToggle && 'text') || props.type}
-                    id={props.type === "checkbox" ? props.name : props.id}
+                    id={(props.label && (props.type === "checkbox" || props.type === "radio")) ? props.label.forId : props.id}
                     disabled={props.disabled}
                     placeholder={props.placeholder || ''} />}
+                {(props.type === 'radio' || props.type === 'checkbox') ? <>
+                    <span className={`checkbox-wrap ${props.halfSelected ? 'selected-half-part' : ''}`}></span>
+                </>: ''}
                 {icons}
             </div>
             {bottomWrap}
@@ -271,12 +259,15 @@ Input.defaultProps = {
     theme: 'light',
     customStylesInput: {},
     customStylesDiv: {},
+    readonlyNoIcon: false,
     className: '',
 };
 Input.propTypes = {
+    readonlyNoIcon: PropTypes.bool,
     className: PropTypes.string,
     theme: PropTypes.string,
     readonly: PropTypes.bool,
+    halfSelected: PropTypes.bool,
     likeMaterialInput: PropTypes.bool,
     transparentInput: PropTypes.bool,
     helperText: PropTypes.string,
@@ -291,9 +282,9 @@ Input.propTypes = {
     refBind: PropTypes.any,
     name: PropTypes.string,
     label: PropTypes.object,
-    type: PropTypes.string,
+    type: PropTypes.string.isRequired,
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    errors: PropTypes.string,
+    errors: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
     disabled: PropTypes.bool,
     events: PropTypes.array,
     icon: PropTypes.object,

@@ -1,9 +1,8 @@
 import {createUseStyles} from 'react-jss'
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
 
 export default createUseStyles({
     'input-slider': {
-        minWidth: '280px',
         marginTop: '5px',
     },
     'value-badge-wrapper': {
@@ -20,7 +19,7 @@ export default createUseStyles({
             color: '#fff',
         },
         '& span.reset-icon': {
-            color: '#C7C7C7',
+            color: variables.$helperTextColor,
             fontSize: '18px',
             marginLeft: '10px',
             cursor: 'pointer',
@@ -32,7 +31,7 @@ export default createUseStyles({
         position: 'absolute',
         bottom: '0px',
         fontSize: '11px',
-        color: '#C7C7C7',
+        color: variables.$helperTextColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

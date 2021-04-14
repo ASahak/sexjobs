@@ -1,6 +1,7 @@
 import React from 'react';
-import Header from 'Components/Shared/Header';
-import Footer from 'Components/Shared/Footer';
+import dynamic from 'next/dynamic';
+const Footer = dynamic(() => import('Components/Shared/Footer').then(_ => _.default), {ssr: true});
+const Header = dynamic(() => import('Components/Shared/Header').then(_ => _.default), {ssr: true});
 
 const Default = ({children}) => {
     return (

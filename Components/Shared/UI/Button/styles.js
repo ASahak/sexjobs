@@ -1,5 +1,6 @@
 import {createUseStyles} from 'react-jss'
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
+import {MediaQuery} from 'static/styles/jss/abstracts/mixins';
 
 export default createUseStyles({
     '@keyframes spin': {
@@ -15,12 +16,18 @@ export default createUseStyles({
         outline: 'none',
         color: '#fff',
         backgroundColor: variables.$baseColor,
-        border: '2px solid red',
         borderRadius: variables.$button.$radius,
         justifyContent: 'center',
         margin: 0,
         padding: variables.$button.$padding,
         transition: '.1s',
+        '&.mobile-full-width': {
+            ...MediaQuery.down({
+                width: '100% !important',
+                marginLeft: '0px !important',
+                marginRight: '0px !important',
+            }).sm
+        },
         '&.custom-icon-dir-right': {
             '& i[class^=\"icon-\"], & .loading-icon': {
                 marginLeft: '7px',
@@ -80,7 +87,8 @@ export default createUseStyles({
     },
     'btn-alt': {
         backgroundColor: variables.$button.$alt.$bg,
-        border: variables.$button.$alt.$border,
+        boxShadow: '0px 0px 0px 2px ' + variables.$button.$alt.$border + ' inset',
+        border: 'none',
         color: variables.$button.$alt.$color,
         '&:hover': {
             ...variables.$button.$alt.$hover

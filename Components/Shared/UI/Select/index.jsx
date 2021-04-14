@@ -1,6 +1,6 @@
 import React, {useMemo, useState, useCallback, useRef, useEffect} from "react";
 import Select from '@material-ui/core/Select';
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
 import InputLabel from '@material-ui/core/InputLabel';
 import TextField from '@material-ui/core/TextField';
 import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -8,7 +8,7 @@ import FormControl from '@material-ui/core/FormControl';
 import PropTypes from "prop-types";
 import UseStyles from './styles';
 import {UiGenerateMargin, UIGetMarginLeftRight} from 'utils/handlers';
-import ListItem from './elements/ListItem';
+import ListItem from './components/ListItem';
 import {MenuItem} from "@material-ui/core";
 import {
     useFormControlStyles,
@@ -22,16 +22,16 @@ import {
 const BrandSelect = (props) => {
     const [selectOpen, setSelectOpen] = useState(false);
     const [marginBottom, setMarginBottom] = useState('0px');
+    const [allowTransition, setAllowTransition] = useState(false);
     const errorRef = useRef();
     const bottomWrapRef = useRef();
-    const styles = UseStyles();
+    const styles = UseStyles({}, {link: true});
     const {
         options,
         label,
         value,
         placeholder,
         id,
-        handleChange,
         helperText,
         required,
         errors,
@@ -42,13 +42,13 @@ const BrandSelect = (props) => {
         withIcon,
         withAvatar,
     } = props;
-
     const sharedPropsOfClasses = useMemo(() => {
         const backgroundColor = props.theme === 'dark' ? variables.$input.$theme.$dark : variables.$input.$theme.$light;
         const boxShadow = props.theme === 'dark' ? variables.$select.$dark.$borderColor + ' 0px 0px 0px 1px' : 'none';
         return {
-            backgroundColor,
+            backgroundColor: props.readonly ? 'rgb(221, 217, 217)' : backgroundColor,
             boxShadow,
+            transition: allowTransition ? 'all 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275)' : '0s',
             marginBottom: marginBottom,
             isOpened: selectOpen,
             isDark: props.theme === 'dark',
@@ -59,20 +59,24 @@ const BrandSelect = (props) => {
             paperMarginTop: props.paperMarginTop,
             size: props.size,
         }
-    }, [props.size, props.theme, selectOpen, marginBottom, props.paperMarginTop]);
+    }, [props.size, props.theme, selectOpen, props.readonly, marginBottom, props.paperMarginTop, allowTransition]);
 
     const convertNaturalSize = useCallback((prop, what) => {
         if (isNaN(+prop)) return prop;
         else return prop + what;
     }, [props.width]);
 
+    const togglePopover = (val) => {
+        if (props.onOpen || props.onClose) {
+            props[val ? 'onOpen' : 'onClose'](val);
+        }
+        setSelectOpen(val)
+    }
     const classesLabel = useLabelStyles({
         color: (label && label.color) || '#fff',
     });
 
     const classesMenuItem = useItemStyles({
-        avatarBG: sharedPropsOfClasses.isDark ? '#fff' : '#0B0E2A',
-        avatarColor: sharedPropsOfClasses.isDark ? variables.$input.$theme.$dark : '#fff',
         size: props.size,
         iconColor: variables.$select.$dropdown.$listItem.$iconColor,
     });
@@ -106,8 +110,13 @@ const BrandSelect = (props) => {
         setMarginBottom(bottomElementHeight /*marginTopBottom*/ + 'px');
     }, [required, errors, errorRef.current, helperText, bottomWrapRef.current]);
 
+    useEffect(() => {
+        if (marginBottom !== '0px' && !allowTransition) {
+            setAllowTransition(true)
+        }
+    }, [marginBottom, allowTransition])
 
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
     const LabelProps = useMemo(() => ({
@@ -115,33 +124,39 @@ const BrandSelect = (props) => {
         variant: 'filled',
         focused: false,
         shrink: false,
-        ...(errors && {error: errors})
+        ...(errors && {error: !!errors})
     }), [props]);
 
-    const SelectProps = useMemo(() => ({
-        disabled,
-        value: value || '',
-        displayEmpty: !!(!value && placeholder),
-        renderValue: (e) => {
-            if ((placeholder && !value)) {
-                return <div className="default-value-empty">{placeholder}</div>
-            }
-            const currentValue = options.find(_e => _e.value === e);
-            if (currentValue) {
-                return <div>{currentValue.title}</div>
-            }
-        },
-        ...(id && {id}),
-    }), [props, options]);
+    const SelectProps = useMemo(() => {
+        return {
+            ...(props.readonly && {IconComponent: () => !props.readonlyNoIcon ? <span className="icon-Lock select-custom-icon"></span> : null}),
+            disabled: disabled || props.readonly,
+            value: (/^[0-9]*$/gm.test(value) ? +value : value) || '',
+            displayEmpty: !!(!value && placeholder),
+            renderValue: (e) => {
+                if ((placeholder && !value)) {
+                    return <div className="default-value-empty">{placeholder}</div>
+                }
+                const currentValue = options.find(_e => ((/^[0-9]*$/gm.test(_e.value) ? +_e.value : _e.value)) === e);
+                if (currentValue) {
+                    return <div className={withAvatar ? 'with-avatar-value-wrapper' : ''}>
+                        {withAvatar ? <img src={currentValue.imgPath} alt="avatar-select"/> : ''}
+                        {currentValue.title}</div>
+                }
+            },
+            ...(id && {id}),
+    }}, [props, options, value, withAvatar]);
 
     const SelectOptions = useMemo(() => {
         return options.map(item => <MenuItem value={item.value} key={item.value} classes={classesMenuItem}>
             <ListItem
+                avatarBG={props.theme === 'dark' ? '#fff' : '#0B0E2A'}
+                avatarColor={props.theme === 'dark' ? variables.$input.$theme.$dark : '#fff'}
                 itemField={item}
                 withAvatar={withAvatar}
                 withIcon={withIcon}
             /></MenuItem>)
-    }, [options, size, withAvatar, withIcon])
+    }, [options, size, withAvatar, withIcon, props.theme])
 
     const bottomWrap = useMemo(() => {
         if ((helperText || required) && !errors) {
@@ -177,11 +192,18 @@ const BrandSelect = (props) => {
                 getOptionSelected={(option, value) => option.title === value.title}
                 renderOption={(option) => <div>{option.title}</div>}
                 getOptionLabel={(option) => option.title}
-                onOpen={() => setSelectOpen(true)}
-                onClose={() => setSelectOpen(false)}
-                onChange={handleChange}
+                onOpen={() => togglePopover(true)}
+                onClose={() => togglePopover(false)}
+                control={props.control}
+                rules={props.rules}
+                onChange={props.onChange}
+                name={props.name}
                 renderInput={(params) => <TextField {...params} variant="filled" focused={false} placeholder={placeholder}/>}
             /> : <Select
+                control={props.control}
+                rules={props.rules}
+                onChange={props.onChange}
+                name={props.name}
                 MenuProps={{
                     anchorOrigin: {
                         vertical: "bottom",
@@ -192,21 +214,24 @@ const BrandSelect = (props) => {
                         horizontal: "left"
                     },
                     getContentAnchorEl: null,
+                    PopoverClasses: {
+                        root: classesPopover.root,
+                    },
                     classes: {
                         paper: classesPopover.paper,
                     }
                 }}
-                onOpen={() =>  setSelectOpen(true)}
-                onClose={() =>  setSelectOpen(false)}
-                {...SelectProps}
+                onOpen={() => togglePopover(true)}
+                onClose={() => togglePopover(false)}
                 className={classesSelect.select}
+                {...SelectProps}
                 inputProps={{
                     classes: {
                         root: classesSelect.root,
+                        disabled: classesSelect.disabled,
                         icon: classesSelect.icon,
                     },
                 }}
-                onChange={handleChange}
             >
                 {SelectOptions}
             </Select>}
@@ -234,19 +259,22 @@ BrandSelect.propTypes = {
     autocomplete: PropTypes.bool,
     theme: PropTypes.string,
     readonly: PropTypes.bool,
+    readonlyNoIcon: PropTypes.bool,
     helperText: PropTypes.string,
     direction: PropTypes.string,
     required: PropTypes.bool,
     fullWidth: PropTypes.bool,
     size: PropTypes.string,
-    refBind: PropTypes.any,
+    options: PropTypes.array,
     name: PropTypes.string,
     label: PropTypes.object,
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     errors: PropTypes.string,
     disabled: PropTypes.bool,
     margin: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
-    handleChange: PropTypes.func,
+    onChange: PropTypes.func,
+    onOpen: PropTypes.func,
+    onClose: PropTypes.func,
     value: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.number

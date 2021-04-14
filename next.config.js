@@ -18,11 +18,17 @@ module.exports = {
         config.plugins = [
             ...config.plugins,
         ];
-
-        config.resolve.alias['Components'] = path.join(__dirname, 'Components');
-        config.resolve.alias['static'] = path.join(__dirname, 'static');
-        config.resolve.alias['utils'] = path.join(__dirname, 'utils');
-        config.resolve.alias['hooks'] = path.join(__dirname, 'Hooks');
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            Components: path.join(__dirname, 'Components'),
+            dummyData: path.join(__dirname, 'DummyData'),
+            static: path.join(__dirname, 'static'),
+            services: path.join(__dirname, 'services'),
+            utils: path.join(__dirname, 'utils'),
+            hooks: path.join(__dirname, 'Hooks'),
+            store: path.join(__dirname, 'store'),
+            hoc: path.join(__dirname, 'HOC'),
+        }
         return config;
     }
 };

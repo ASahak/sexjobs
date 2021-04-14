@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useStat
 import PropTypes from 'prop-types';
 import UseStyles from './styles';
 import {UiGenerateMargin, UIGetMarginLeftRight} from 'utils/handlers';
-import variablesJSS from 'static/styles/jss/variables';
+import variablesJSS from 'static/styles/jss/abstracts/variables';
 const canUseDOM = (typeof window !== 'undefined');
 React.useLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
 
@@ -12,54 +12,18 @@ const InputLikeSelectWithScroll = (props) => {
         left: false,
         right: false,
     });
+    const [marginBottom, setMarginBottom] = useState('0px');
+    const [allowTransition, setAllowTransition] = useState(false);
     const parentRef = useRef();
     const errorRef = useRef();
     const bottomWrapRef = useRef();
     const inputWrapperRef = useRef();
     const styles = UseStyles(inputStyleProps, {link: true});
 
-    useEffect(() => {
-        const findIndexCurrent = props.options.findIndex(e => e.value === props.value);
-        setDisablePrevBtn({
-            left: findIndexCurrent <= 0,
-            right: findIndexCurrent === props.options.length - 1,
-        })
-    }, [props.value, props.options])
-
-    useLayoutEffect(() => { // Set Inline Styles and send to JSS
-        setInputStyleProps({
-            ...inputStyleProps,
-            disabledColor: (props.theme === 'dark' ? '#0a29559e' : '#ffffffa8'),
-            fontSize: variablesJSS.$input['$' + props.size].$fontSize,
-            padding: variablesJSS.$input['$' + (props.size || 'md')].$padding,
-            textColor: props.theme === 'dark' ? variablesJSS.$select.$dark.$textColor : variablesJSS.$select.$textColor,
-            iconColor: props.theme === 'dark' ? variablesJSS.$input.$theme.$darkColor : '#000',
-            backgroundColor: props.customStylesInput.background,
-            labelColor: props.label && props.label.color || variablesJSS.$input.$baseColor,
-            marginBottom: calculateMarginBottom(),
-            placeholderColor: props.theme === 'dark' ? variablesJSS.$select.$dark.$emptyTextColor : variablesJSS.$select.$emptyTextColor,
-        })
-    }, [
-        props.size,
-        props.theme,
-        props.customStylesInput,
-        props.errors,
-        props.label,
-        errorRef.current,
-        bottomWrapRef.current,
-        props.helperText,
-        props.required]);
-
-    const calculateMarginBottom = useCallback(() => { // Calculate Margin Bottom
-        const bottomElementHeight = errorRef.current ? errorRef.current.offsetHeight + 2 :
-            bottomWrapRef.current ? bottomWrapRef.current.offsetHeight + 2 : 0;
-        return bottomElementHeight /*marginTopBottom*/ + 'px'
-    }, [props.required, props.errors, errorRef.current, props.helperText, bottomWrapRef.current])
-
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
-    const inlineStylesParent = useMemo(() => { // Set inline styles on the main Wrapper
+    const inlineStylesParent = useMemo(() => { // Set inline styles on the Main Wrapper
         return {
             ...generateMarginDiv(),
             width: props.fullWidth ? `calc(100% - ${UIGetMarginLeftRight(props.margin)}px)` : props.width,
@@ -99,8 +63,10 @@ const InputLikeSelectWithScroll = (props) => {
             const findIndexCurrent = props.options.findIndex(e => e.value === props.value);
             if (findIndexCurrent > -1) {
                 if (dir === 'prev') {
+                    if (disablePrevBtn.left) return;
                     index = !!findIndexCurrent ? findIndexCurrent - 1 : 0;
                 } else {
+                    if (disablePrevBtn.right) return;
                     index = findIndexCurrent === props.options.length - 1 ? findIndexCurrent : findIndexCurrent + 1;
                 }
             }
@@ -138,6 +104,54 @@ const InputLikeSelectWithScroll = (props) => {
             )
         })
     }, [props.value, props.options])
+
+    useEffect(() => { // Calculate Margin Bottom
+        const bottomElementHeight = errorRef.current ? errorRef.current.offsetHeight + 2 :
+            bottomWrapRef.current ? bottomWrapRef.current.offsetHeight + 2 : 0;
+        setMarginBottom(bottomElementHeight /*marginTopBottom*/ + 'px');
+    }, [props.required, props.errors, errorRef.current, props.helperText, bottomWrapRef.current]);
+
+    useEffect(() => {
+        if(marginBottom !== '0px' && !allowTransition) {
+            setAllowTransition(true);
+        }
+    }, [marginBottom, allowTransition])
+
+    useEffect(() => {
+        const findIndexCurrent = props.options.findIndex(e => e.value === props.value);
+        setDisablePrevBtn({
+            left: findIndexCurrent <= 0,
+            right: findIndexCurrent === props.options.length - 1,
+        })
+    }, [props.value, props.options])
+
+    useLayoutEffect(() => { // Set Inline Styles and send to JSS
+        setInputStyleProps(prevState => ({
+            ...prevState,
+            transition: allowTransition ? 'all 400ms cubic-bezier(0.04, 1.1, 1, 0.99)' : '0s',
+            disabledColor: (props.theme === 'dark' ? '#0a29559e' : '#ffffffa8'),
+            fontSize: variablesJSS.$input['$' + props.size].$fontSize,
+            padding: variablesJSS.$input['$' + (props.size || 'md')].$padding,
+            textColor: props.theme === 'dark' ? variablesJSS.$select.$dark.$textColor : variablesJSS.$select.$textColor,
+            iconColor: props.theme === 'dark' ? variablesJSS.$input.$theme.$darkColor : '#000',
+            backgroundColor: props.customStylesInput.background,
+            labelColor: props.label && props.label.color || variablesJSS.$input.$baseColor,
+            marginBottom: marginBottom,
+            placeholderColor: props.theme === 'dark' ? variablesJSS.$select.$dark.$emptyTextColor : variablesJSS.$select.$emptyTextColor,
+        }))
+    }, [
+        props.size,
+        props.theme,
+        props.customStylesInput,
+        props.errors,
+        props.label,
+        errorRef.current,
+        bottomWrapRef.current,
+        props.helperText,
+        allowTransition,
+        marginBottom,
+        props.required]);
+
 
     return (
         <div style={inlineStylesParent}

@@ -2,12 +2,17 @@ import React, {useEffect, useLayoutEffect, useRef, useCallback, useMemo} from 'r
 import PropTypes from 'prop-types';
 import UseStyles from './styles';
 import {UiGenerateMargin, UIGetMarginLeftRight} from 'utils/handlers';
+import {UI} from 'utils/constants';
+import {useSelector} from 'react-redux';
+import {baseSelector} from 'store/reselect';
 const canUseDOM = (typeof window !== 'undefined');
 React.useLayoutEffect = canUseDOM ? useLayoutEffect : useEffect;
 
 const Button = (props) => {
+    const baseState = useSelector(baseSelector());
+    const {deviceType} = baseState.deviceParams;
     const buttonRef = useRef();
-    const styles = UseStyles();
+    const styles = UseStyles({}, {link: true});
 
     useEffect(() => {
         if (props.attr && buttonRef.current) {
@@ -17,7 +22,7 @@ const Button = (props) => {
         }
     }, [props.attr]);
 
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
     const inlineStyles = useMemo(() => {
@@ -38,23 +43,25 @@ const Button = (props) => {
         props.color,
         props.fontSize,
         props.fullWidth,
+        props.mobileFullWidth,
+        deviceType,
         props.width,
         props.customStyles,
         props.background,
     ]);
 
     const icon = useMemo(() => {
-        if (props.icon && props.icon.loading) return <i className={'loading-icon'}></i>
-        if (props.icon && !props.icon.hasOwnProperty('loading')) return <i className={props.icon.className}></i>
+        if (props.icon?.loading) return <i className={'loading-icon'}></i>
+        else if (props.icon?.className) return <i className={props.icon.className}></i>
     }, [props.icon])
 
     const generateClassName = useMemo(() => {
-        return `${props.icon ? 'custom-icon-dir-' + (props.icon.direction || 'right') : ''} ${styles['btn-global']} ${styles['btn-' + props.size]} ${props.hover || ''} ${styles['btn-' + props.typeButton]} ${props.className}`
-    }, [props.icon, props.size, props.hover, props.typeButton, props.className]);
+        return `${props.mobileFullWidth && deviceType === 'mobile' ? 'mobile-full-width' : ''} ${props.icon ? 'custom-icon-dir-' + (props.icon.direction || 'right') : ''} ${styles['btn-global']} ${styles['btn-' + props.size]} ${props.hover || ''} ${styles['btn-' + props.typeButton]} ${props.className}`
+    }, [props.icon, props.size, props.mobileFullWidth, deviceType, props.hover, props.typeButton, props.className]);
 
     return (
         <button
-            ref={buttonRef}
+            ref={props.refBind || buttonRef}
             className={generateClassName}
             style={inlineStyles}
             onClick={props.onClick}
@@ -72,17 +79,19 @@ Button.defaultProps = {
     fontSize: 13,
     margin: 0,
     disabled: false,
+    mobileFullWidth: false,
     customStyles: {},
     typeButton: 'default',
     className: '',
 };
 Button.propTypes = {
     className: PropTypes.string,
-    typeButton: PropTypes.string,
+    typeButton: PropTypes.oneOf([...UI.button.types]),
     direction: PropTypes.string,
     attr: PropTypes.object,
     icon: PropTypes.object,
     disabled: PropTypes.bool,
+    mobileFullWidth: PropTypes.bool,
     background: PropTypes.string,
     border: PropTypes.string,
     hover: PropTypes.string,
@@ -94,6 +103,7 @@ Button.propTypes = {
     margin: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
     text: PropTypes.string,
     customStyles: PropTypes.object,
+    refBind: PropTypes.object,
     onClick: PropTypes.func
 };
 export default React.memo(Button);

@@ -1,17 +1,18 @@
 import {createUseStyles} from 'react-jss'
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
+import {Shadow} from 'static/styles/jss/abstracts/mixins';
 
 export default createUseStyles( {
     'input-styles_extend': {
         fontFamily: 'Arial',
         boxSizing: 'border-box',
         width: '100%',
-        transition: 'all 400ms cubic-bezier(0.04, 1.1, 1, 0.99)',
         position: 'relative',
         borderRadius: variables.$input.$radius,
         border: 'none',
         zIndex: 2,
         display: 'flex',
+        transitionProperty: 'margin-bottom, box-shadow',
         '&:hover': {
             ...variables.$input.$hover,
         },
@@ -24,49 +25,102 @@ export default createUseStyles( {
         '&:read-only': {
             backgroundColor: variables.$input.$readOnly,
             pointerEvents: 'none',
+            color: variables.$input.$readOnlyColor + ' !important'
         }
     },
     'radio-checkbox_extend': {
+        '& .checkbox-wrap': {
+            display: 'flex',
+            marginRight: '13px',
+        },
         '& label': {
             paddingBottom: '0 !important',
             marginBottom: '0 !important',
             fontSize: variables.$input.$fontSize,
             display: 'inline-flex',
-            flexDirection: 'row-reverse',
+            flexWrap: 'wrap',
             alignItems: 'center',
             cursor: 'pointer',
-            '& .checkbox-wrap': {
-                display: 'flex',
-                marginRight: '13px',
+            fontWeight: 400,
+            '& a': {
+                color: variables.$labelLink,
             }
         },
         '& input': {
             opacity: '0',
             position: 'absolute',
-            zIndex: '-1',
+            zIndex: '22',
         },
         marginBottom: variables.$input.$marginBottom,
         display: 'flex',
         flexDirection: 'row-reverse !important',
+        justifyContent: 'flex-end',
         alignItems: 'center',
-        '& label.label-md': {
+        '&.error-field': {
             '& .checkbox-wrap': {
-                width: '18px !important',
-                height: '18px',
+                '&::after': {
+                    borderColor: variables.$danger,
+                }
             },
+            '& label': {
+                color: 'inherit !important',
+            },
+            '& .input-icon': {
+                display: 'none',
+            }
         },
-        '& label.label-sm': {
-            '& .checkbox-wrap': {
-                width: '14px !important',
+        '&.md-parent-wrapper': {
+            '& .input-element-wrapper': {
+                height: '18px',
+                '& .checkbox-wrap, & > input': {
+                    width: '18px !important',
+                    height: '18px',
+                    minWidth: '18px',
+                    minHeight: '18px',
+                },
+            }
+        },
+        '&.sm-parent-wrapper': {
+            '& .input-element-wrapper': {
                 height: '14px',
-            },
+                '& .checkbox-wrap, & > input': {
+                    width: '14px !important',
+                    height: '14px',
+                    minWidth: '14px',
+                    minHeight: '14px',
+                },
+            }
         },
     },
     'input-wrap': {
         userSelect: 'none',
+        '& .input-element-wrapper': {
+            display: 'flex',
+        },
+        '& input[type=\"number\"]::-webkit-outer-spin-button, & input[type=\"number\"]::-webkit-inner-spin-button': {
+            '-webkit-appearance': 'none',
+            margin: '10px',
+        },
+        '& input[type=\"number\"]': {
+            '-moz-appearance': 'textfield',
+        },
         '&.material-input-wrapper': {
+            '&.error-field': {
+                '& .MuiInputBase-root': {
+                    '& > input': {
+                        boxShadow: 'none !important',
+                        borderBottom: '2px solid ' + variables.$danger,
+                    },
+                    '&::before, &::after': {
+                        display: 'none',
+                    }
+                }
+            },
             '& .MuiFormControl-root': {
                 width: '100%',
+            },
+            '& .MuiInputBase-input': {
+                transition: '.4s',
             },
             '& .MuiInputBase-root': {
                 fontSize: '15px',
@@ -89,20 +143,21 @@ export default createUseStyles( {
         },
         position: 'relative',
         width: 'fit-content',
-        minWidth: 'fit-content',
         fontFamily: 'Arial',
         height: 'fit-content',
         '& label': {
             fontWeight: '600',
             paddingBottom: '7px',
+            marginBottom: '0',
             color: props => props.labelColor,
         },
         '& .input-icon': {
             position: 'absolute',
             right: '7px',
             zIndex: '22',
+            lineHeight: 'normal',
             fontSize: variables.$input.$iconSize + 'px',
-            top: props => props.iconTop,
+            transform: props => props.iconTop,
         },
         '& .error-line': {
             fontFamily: 'Arial',
@@ -123,7 +178,7 @@ export default createUseStyles( {
             position: 'absolute',
             bottom: '0px',
             fontSize: '11px',
-            color: '#C7C7C7',
+            color: variables.$helperTextColor,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -139,27 +194,30 @@ export default createUseStyles( {
             '& .input-element-wrapper:hover input': {
                 ...variables.$input.$hover,
             },
-
             // Input
             '& input': {
+                transition: props => props.transition,
                 extend: 'input-styles_extend',
                 marginBottom: props => props.marginBottom,
                 backgroundColor: props => props.backgroundColor,
                 border: props => props.border,
             },
-            '& input[type=\"number\"]::-webkit-outer-spin-button, & input[type=\"number\"]::-webkit-inner-spin-button': {
-                '-webkit-appearance': 'none',
-                margin: '10px',
-            },
-            '& input[type=\"number\"]': {
-                '-moz-appearance': 'textfield',
-            },
             '& input[type=\"checkbox\"], & input[type=\"radio\"]': {
-                width: 'auto !important',
                 cursor: 'pointer',
                 margin: '0',
                 minWidth: 'fit-content !important',
                 padding: '0 !important',
+            },
+            '& input[type=\"checkbox\"] + .selected-half-part::before': {
+                content: '""',
+                display: 'block',
+                backgroundColor: 'rgb(197, 197, 197)',
+                width: '50%',
+                height: '50%',
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
             },
             '& input:disabled': {
                 backgroundColor: variables.$input.$disabledColor,
@@ -233,7 +291,7 @@ export default createUseStyles( {
             },
             '& .input-element-wrapper input, & .input-element-wrapper textarea': {
                 marginBottom: props => props.marginBottom,
-                boxShadow: '0 0 1px 1px '+ variables.$danger + ' inset !important',
+                ...Shadow('0 0 1px 1px '+ variables.$danger + ' inset !important'),
                 paddingRight: '25px !important',
             },
             '& i.error-icon': {
@@ -252,19 +310,36 @@ export default createUseStyles( {
             '&.clickable': {
                 cursor: 'pointer',
             },
+            '&.icon-eye-blocked': {
+                '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    width: '20px',
+                    height: '1px',
+                    backgroundColor: variables.$input.$iconColor,
+                    transform: 'rotate(-45deg)',
+                    left: '-3px',
+                    top: '7px',
+                }
+            },
             color: variables.$input.$iconColor,
         }
     },
     'wrap-with-checkbox': {
+        border: 'none !important',
+        color: props => props.labelColor,
         '&:not(.material-input-wrapper)': {
             extend: 'radio-checkbox_extend',
             '& .checkbox-wrap': {
                 position: 'relative',
-                '&::before': {
+                '&:not(.selected-half-part)::before': {
                     display: 'none',
                     content: '""',
-                    left: '5px',
                     top: '0px',
+                    bottom: '3px',
+                    left: '0',
+                    margin: 'auto',
+                    right: '0',
                     width: '6px',
                     height: '12px',
                     border: 'solid white',
@@ -289,6 +364,8 @@ export default createUseStyles( {
         }
     },
     'wrap-with-radio': {
+        border: 'none !important',
+        color: props => props.labelColor,
         '&:not(.material-input-wrapper)': {
             extend: 'radio-checkbox_extend',
             '& .checkbox-wrap': {
@@ -330,25 +407,30 @@ export default createUseStyles( {
                 backgroundColor: variables.$input.$theme.$light,
             },
             // CheckBox
-            '& input[type=\"checkbox\"]:checked + .checkbox-wrap::before': {
-                display: 'block',
-            },
-            '& input[type=\"checkbox\"]:checked + .checkbox-wrap::after': {
-                backgroundColor: variables.$input.$checkbox.$onLightBG,
-                borderColor: variables.$input.$checkbox.$onLightBG,
+            '& input[type=\"checkbox\"]': {
+                '&:checked + .checkbox-wrap::before': {
+                    display: 'block',
+                },
+                '&:checked + .checkbox-wrap::after': {
+                    backgroundColor: variables.$input.$checkbox.$onLightBG,
+                    borderColor: variables.$input.$checkbox.$onLightBG,
+                }
             },
             // Radio
-            '& input[type=\"radio\"]:checked + .checkbox-wrap::before': {
-                borderColor: variables.$input.$checkbox.$onLightBG,
+            '& input[type=\"radio\"]': {
+                '&:checked + .checkbox-wrap::before': {
+                    borderColor: variables.$input.$checkbox.$onLightBG,
+                },
+                '&:checked + .checkbox-wrap::after': {
+                    display: 'block',
+                    backgroundColor: variables.$input.$checkbox.$onLightBG,
+                },
             },
-            '& input[type=\"radio\"]:checked + .checkbox-wrap::after': {
-                display: 'block',
-                backgroundColor: variables.$input.$checkbox.$onLightBG,
-            }
         }
     },
     'theme-dark': {
         '&:not(.material-input-wrapper)': {
+            border: '1px solid ' + variables.$input.$darkBorderColor,
             '& textarea': {
                 '&::-webkit-scrollbar-track': {
                     backgroundColor: '#07224D',
@@ -365,23 +447,27 @@ export default createUseStyles( {
                 color: variables.$input.$theme.$darkColor + '!important',
             },
             // CheckBox
-            '& input[type=\"checkbox\"]:checked + .checkbox-wrap::before': {
-                display: 'block',
-                borderColor: variables.$baseColor,
-            },
-            '& input[type=\"checkbox\"]:checked + .checkbox-wrap::after': {
-                backgroundColor: variables.$input.$checkbox.$onDarkBG,
-                borderColor: variables.$input.$checkbox.$onDarkBG,
+            '& input[type=\"checkbox\"]': {
+                '&:checked + .checkbox-wrap::before': {
+                    display: 'block',
+                    borderColor: variables.$baseColor,
+                },
+                '&:checked + .checkbox-wrap::after': {
+                    backgroundColor: variables.$input.$checkbox.$onDarkBG,
+                    borderColor: variables.$input.$checkbox.$onDarkBG,
+                },
             },
 
             // Radio
-            '& input[type=\"radio\"]:checked + .checkbox-wrap::before': {
-                borderColor: variables.$input.$checkbox.$onDarkBG,
+            '& input[type=\"radio\"]': {
+                '&:checked + .checkbox-wrap::before': {
+                    borderColor: variables.$input.$checkbox.$onDarkBG,
+                },
+                '&:checked + .checkbox-wrap::after': {
+                    display: 'block',
+                    backgroundColor: variables.$input.$checkbox.$onDarkBG,
+                },
             },
-            '& input[type=\"radio\"]:checked + .checkbox-wrap::after': {
-                display: 'block',
-                backgroundColor: variables.$input.$checkbox.$onDarkBG,
-            }
         }
     },
     'transparent-input-wrap': {
@@ -395,9 +481,9 @@ export default createUseStyles( {
                 color: variables.$input.$theme.$darkColor + '!important',
             },
             '& .bottom-wrap': {
-                left: '100px',
-                width: 'calc(100% - 100px)',
-                bottom: '0px',
+                left: '110px',
+                width: 'calc(100% - 110px)',
+                bottom: '1px',
                 '& p.helper-text': {
                     textOverflow: 'ellipsis',
                     overflow: 'hidden',
@@ -413,34 +499,37 @@ export default createUseStyles( {
                 paddingBottom: props => props.marginBottom,
                 '& .error-line': {
                     bottom: '0px',
-                    left: '100px',
-                    width: 'calc(100% - 100px)',
+                    left: '110px',
+                    width: 'calc(100% - 110px)',
                 },
                 '& .input-element-wrapper input, & .input-element-wrapper textarea': {
-                    boxShadow: 'none !important',
+                    ...Shadow('none !important'),
                 }
             },
             '& label': {
                 padding: '0px !important',
-                width: '100px',
+                width: '110px',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
             },
             '& .input-element-wrapper': {
-                width: 'calc(100% - 100px)',
+                width: 'calc(100% - 110px)',
                 '& textarea, & input': {
                     width: '100%',
                     border: 'none !important',
                     background: 'none !important',
                     margin: '0 !important',
                     paddingLeft: '0 !important',
+                    '&:read-only': {
+                        color: '#fff !important'
+                    }
                 },
                 '&:hover input, &:hover textarea': {
-                    boxShadow: 'none !important',
+                    ...Shadow('none !important'),
                 },
                 '& input:focus, & textarea:focus': {
-                    boxShadow: 'none !important',
+                    ...Shadow('none !important'),
                 }
             }
         },

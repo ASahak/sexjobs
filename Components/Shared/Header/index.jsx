@@ -2,74 +2,111 @@ import React, {useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import UseStyles from './styles';
 import {Container, Row, Col} from 'reactstrap';
-import Search from './elements/search';
-import AuthPanel from './elements/auth-panel';
+import Search from './components/search';
+import AuthPanel from './components/auth-panel';
 import Link from 'next/link';
 import {useRouter} from "next/router";
 import {useScrollDirection} from 'hooks/use-scroll';
-import useDevice from 'hooks/use-media-device';
+import {
+    toggleCategoriesMenuMobile,
+    setPageName,
+    setHeaderRect,
+} from 'store/actions';
+import {PAGE_NAMES} from 'utils/constants';
+import {baseSelector} from 'store/reselect';
+import {useSelector, useDispatch} from 'react-redux';
 
 const Header = (props) => {
-    const {deviceType} = useDevice();
+    const dispatch = useDispatch();
+    const baseState = useSelector(baseSelector());
+    const pageName =  baseState.pageName;
+    const asideMenuInPage =  baseState.asideMenuInPage;
+    const deviceParams =  baseState.deviceParams;
+
+    const {deviceType, deviceSize, deviceWidth} = deviceParams;
     const {scrollDir, scrollY} = useScrollDirection();
     const router = useRouter();
     const headerRef = useRef();
-    const [page, setPage] = useState('');
-    const styles = UseStyles();
-    const [headerHeight, setHeaderHeight] = useState(0);
+    const styles = UseStyles({}, {link: true});
+    const [searchMobileToggle, setSearchMobileToggle] = useState(false);
+    const headerRect = baseState.headerRect || {};
+    const [isLogged, setIsLogged] = useState(true); // Need to use as prop instead of state
+    const toggleSearchBar = () => {
+        setSearchMobileToggle(!searchMobileToggle)
+    }
+
+    useEffect(() => {
+        const handleRouteChange = (url, { shallow }) => {
+            const isPage = PAGE_NAMES.find(e => '/' + e === url);
+            if (isPage) dispatch(setPageName(isPage));
+            else dispatch(setPageName(''));
+            setSearchMobileToggle(false);
+        }
+        router.events.on('routeChangeComplete', handleRouteChange)
+        return () => {
+            router.events.off('routeChangeComplete', handleRouteChange)
+        }
+    }, [])
 
     useEffect(() => {
         if (typeof window !== undefined && headerRef.current) {
             const _height = headerRef.current.getBoundingClientRect().height;
-            setHeaderHeight(_height);
-            document.body.style.paddingTop = _height + 'px'
+            dispatch(setHeaderRect(headerRef.current.getBoundingClientRect()))
+            document.body.style.paddingTop = _height + 'px';
+            headerRef.current.style.maxWidth = headerRef.current.parentNode.getBoundingClientRect().width + 'px';
         }
-    }, [headerRef.current]);
+    }, [headerRef.current, pageName, deviceWidth]);
 
     useEffect(() => {
         if (typeof window !== undefined) {
+            const isOpenMobile = searchMobileToggle ? headerRef.current.querySelector('form').getBoundingClientRect().height + 16/*MarginTop - absolute margin*/ : 0;
             if (deviceType === 'mobile' && scrollDir) {
-                if (scrollY > headerHeight && scrollDir === 'down') {
-                    headerRef.current.style.top = -headerHeight + 'px'
+                if (scrollY > headerRect.height + isOpenMobile && scrollDir === 'down') {
+                    headerRef.current.style.top = (-headerRect.height - isOpenMobile) + 'px'
                 }
-                if (scrollY > headerHeight && scrollDir === 'up') {
+                if (scrollY > headerRect.height + isOpenMobile && scrollDir === 'up') {
                     headerRef.current.style.position = 'fixed'
                     headerRef.current.style.top = '0px'
                 }
                 if (scrollY === 0) headerRef.current.style.position = 'absolute'
             }
         }
-    }, [scrollDir, scrollY, deviceType, headerRef.current, headerHeight])
+    }, [scrollDir, scrollY, deviceType, headerRef.current, headerRect, searchMobileToggle])
 
     useEffect(() => {
-        if (router.pathname === '/login') setPage('login');
-        else if (router.pathname === '/register') setPage('register');
-        else setPage('');
+        const isPage = PAGE_NAMES.find(e => '/' + e === router.pathname);
+        if (isPage) dispatch(setPageName(isPage));
+        else dispatch(setPageName(''));
     }, [router]);
 
     return (
         <header ref={headerRef}>
             <Container>
                 <Row>
-                    <Col xs={6} sm={6} md={page ? 6 : 3}>
-                        <div className={styles['logo-wrapper']}>
+                    <Col xs={pageName ? 4 : 6} sm={6} md={6} lg={pageName ? 6 : 3} xl={pageName ? 6 : 2}>
+                        <div className={styles['logo-wrapper']} suppressHydrationWarning={true}>
+                            {(!pageName && asideMenuInPage) ? <span className="icon-Hamburger toggle-categories_menu" onClick={() => dispatch(toggleCategoriesMenuMobile(true))}></span> : null}
                             <Link href="/" prefetch={false}>
                                 <a>
-                                    <img src="/images/logo2.svg"/>
+                                    <img alt="logo" src="/images/logo2.svg"/>
                                 </a>
                             </Link>
                         </div>
                     </Col>
-                    {!page ? <Col xs={6} sm={6} md={6}>
-                        <Search />
+                    {!pageName ? <Col xs={{order: 'last', size: 12}} lg={{order: 0, size: 6}} xl={{order: 0, size: 7}}>
+                        <Search openMobile={searchMobileToggle} />
                     </Col> : ''}
-                    <Col xs={6} sm={6} md={page ? 6 : 3}>
-                        <AuthPanel routePage={page}/>
+                    <Col xs={pageName ? 8 : 6} sm={6} md={6} lg={pageName ? 6 : 3} xl={pageName ? 6 : 3}>
+                        <div className={styles['mobile-toggle_search-bar']} suppressHydrationWarning={true}>
+                            {!pageName && deviceType === 'mobile' ? <span className={`icon-Search ${searchMobileToggle ? 'opened-search-icon' : ''}`} onClick={toggleSearchBar}></span> : null}
+                            <AuthPanel isLogged={isLogged} routePage={pageName} />
+                        </div>
                     </Col>
                 </Row>
             </Container>
         </header>
     )
 }
+Header.defaultProps = {}
 Header.propTypes = {};
-export default Header;
+export default React.memo(Header);

@@ -1,5 +1,5 @@
 import {createUseStyles} from 'react-jss'
-import variables from 'static/styles/jss/variables';
+import variables from 'static/styles/jss/abstracts/variables';
 
 export default createUseStyles({
     'input-wrap': {
@@ -39,7 +39,7 @@ export default createUseStyles({
         position: 'absolute',
         bottom: '0px',
         fontSize: '11px',
-        color: '#C7C7C7',
+        color: variables.$helperTextColor,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

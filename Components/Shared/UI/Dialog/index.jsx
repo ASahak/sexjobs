@@ -10,11 +10,12 @@ import {
 } from '../makeStylesUI';
 
 const SimpleDialog = (props) => {
-    const styles = UseStyles();
+    const styles = UseStyles({}, {link: true});
     const classesDialog = useDialogStyles();
 
     return (
         <Dialog
+            className={props.className || ''}
             classes={classesDialog}
             open={props.open}
             onClose={props.onClose}
@@ -24,7 +25,7 @@ const SimpleDialog = (props) => {
             maxWidth={props.maxWidth}
         >
             {props.title ? <DialogTitle id="alert-dialog-title">{props.title}</DialogTitle> : null}
-            <DialogContent>
+            <DialogContent style={{minWidth: props.minWidth}}>
                 {props.children}
             </DialogContent>
             {props.actions ? <DialogActions data-vertical={props.actionsVertical}>
@@ -45,12 +46,15 @@ SimpleDialog.defaultProps = {
     maxWidth: 'xs',
     actionsVertical: false,
     disableOkBtn: false,
+    minWidth: 200,
 };
 SimpleDialog.propTypes = {
     actionsVertical: PropTypes.bool,
     open: PropTypes.bool,
     disableOkBtn: PropTypes.bool,
     maxWidth: PropTypes.string,
+    minWidth: PropTypes.number,
+    className: PropTypes.string,
     fullWidth: PropTypes.bool,
     onClose: PropTypes.func,
     onOk: PropTypes.func,

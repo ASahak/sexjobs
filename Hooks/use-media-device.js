@@ -1,26 +1,36 @@
 import React, {useEffect, useState} from "react";
-import {breakpoints, deviceChecking} from 'utils/constants';
+import {BREAKPOINTS, DEVICE_CHECKING} from 'utils/constants';
 
 const useWidth = (width) => {
-    const keys = Object.keys(breakpoints.keys).reverse();
-    const devices = keys.filter(key => width <= breakpoints.keys[key])
+    const keys = Object.keys(BREAKPOINTS.keys).reverse();
+    const devices = keys.filter(key => width <= BREAKPOINTS.keys[key])
     return devices.pop();
 }
 
 export default function useMediaDevice() {
     const isSSR = typeof window !== "undefined";
-    const [deviceSize, setDeviceSize] = useState(useWidth(isSSR ? window.innerWidth : 1200));
+    const _width = isSSR ? window.innerWidth : 1200;
+    const [deviceSize, setDeviceSize] = useState(useWidth(_width));
+    const [windowWidth, setWindowWidth] = useState(_width);
     const [deviceType, setDeviceType] = useState('desktop');
 
     function changeWindowSize() {
-        setDeviceSize(useWidth(window.innerWidth));
+        setWindowWidth(window.innerWidth);
     }
 
     useEffect(() => {
-        if (breakpoints.keys[deviceSize] <= deviceChecking.mobile) setDeviceType('mobile');
-        else if (breakpoints.keys[deviceSize] >= deviceChecking.tablet[0] && breakpoints.keys[deviceSize] <= deviceChecking.tablet[1]) setDeviceType('tablet')
+        const _winSize = isSSR ? window.innerWidth : 1200;
+        const _winType = useWidth(_winSize);
+        if (deviceSize !== _winType) {
+            setDeviceSize(_winType)
+        }
+        if (_winSize !== windowWidth) {
+            changeWindowSize();
+        }
+        if (BREAKPOINTS.keys[_winType] <= DEVICE_CHECKING.mobile) setDeviceType('mobile');
+        else if (BREAKPOINTS.keys[_winType] >= DEVICE_CHECKING.tablet[0] && BREAKPOINTS.keys[_winType] <= DEVICE_CHECKING.tablet[1]) setDeviceType('tablet')
         else setDeviceType('desktop')
-    }, [deviceSize]);
+    }, [deviceSize, isSSR, windowWidth]);
 
     React.useEffect(() => {
         isSSR && window.addEventListener("resize", changeWindowSize);
@@ -31,6 +41,7 @@ export default function useMediaDevice() {
     }, []);
 
     return {
+        windowWidth,
         deviceSize,
         deviceType,
     };

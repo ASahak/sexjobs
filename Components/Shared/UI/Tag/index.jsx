@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {UiGenerateMargin} from 'utils/handlers';
 
 const Tag = (props) => {
-    const styles = UseStyles();
+    const styles = UseStyles({}, {link: true});
 
     const toggleTag = useCallback((X) => {
         if (props.withX && X === 'div' && props.selected) return;
@@ -17,7 +17,7 @@ const Tag = (props) => {
         return props.withX || props.count
     }, [props.withX, props.count]);
 
-    const inlineStylesParent = useMemo(() => { // Set inline styles on the main Wrapper
+    const inlineStylesParent = useMemo(() => { // Set inline styles on the Main Wrapper
         return {
             ...generateMarginDiv(),
             width: props.width ? props.width + 'px' : 'auto',
@@ -33,7 +33,7 @@ const Tag = (props) => {
             <p>{props.text}</p>
             {isRightActions ? <div>
                 {props.count ? <span className="count-ads">({props.count})</span> : ''}
-                {props.withX && props.selected ? <span className="with-x icon-cross" onClick={() => toggleTag('icon')}></span> : ''}
+                {props.withX && props.selected ? <span className="with-x icon-Close" onClick={() => toggleTag('icon')}></span> : ''}
             </div> : null}
         </div>
     )

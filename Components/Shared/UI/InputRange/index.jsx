@@ -9,9 +9,9 @@ import {UiGenerateMargin, UIGetMarginLeftRight} from 'utils/handlers';
 
 const InputRange = (props) => {
     const [marginBottom, setMarginBottom] = useState('0px');
-    const defaultValue = props.value.length === 1 ? props.value[0] : props.value;
+    const defaultValue = props.value.length === 1 ? +props.value[0] : props.value.map(e => +e);
     const [value, setValue] = useState(defaultValue);
-    const styles = UseStyles();
+    const styles = UseStyles({}, {link: true});
 
     const errorRef = useRef();
     const bottomWrapRef = useRef();
@@ -37,10 +37,10 @@ const InputRange = (props) => {
     };
 
     const resetSlider = () => {
-        setValue(defaultValue);
+        setValue(props.resetValue || defaultValue);
     }
 
-    // Get position of main Wrapper
+    // Get position of Main Wrapper
     const generateMarginDiv = useCallback(() => UiGenerateMargin(props.margin, props.direction), [props.direction, props.margin]);
 
     const convertNaturalSize = useCallback((prop, what) => {
@@ -74,7 +74,7 @@ const InputRange = (props) => {
                 {(_value.some(e => e > 0)) && <span className="reset-icon icon-bin" onClick={resetSlider}></span>}
             </div>
         )
-    }, [value])
+    }, [value, props.resetValue, defaultValue])
 
     const bottomWrap = useMemo(() => {
         if ((props.helperText || props.required) && !props.errors) {
@@ -110,23 +110,32 @@ const InputRange = (props) => {
         setMarginBottom(bottomElementHeight /*marginTopBottom*/ + 'px');
     }, [props.required, props.errors, errorRef.current, props.helperText, bottomWrapRef.current]);
 
+    useEffect(() => {
+        if (JSON.stringify(defaultValue) !== JSON.stringify(value)) {
+            props.change(value)
+        }
+    }, [value, defaultValue])
+
     return (
-        <FormControl classes={{root: classesFormControl.root}} style={{...generateMarginDiv()}}>
+        <FormControl classes={{root: classesFormControl.root}} style={{...generateMarginDiv(), ...props.style}}>
             {props.label && <InputLabel
                 classes={classesLabel}
                 {...LabelProps}
             >{props.label.title + (props.required ? ' *' : '')}</InputLabel>}
             <div className={`${styles['input-slider']}`} data-disabled={props.disabled}>
                 <Slider
+                    step={props.step}
                     disabled={props.disabled}
                     classes={classesRangeSlider}
                     value={value}
                     defaultValue={defaultValue}
                     onChange={handleChange}
                     valueLabelDisplay="off"
+                    max={props.max || 100}
+                    min={props.min || 0}
                     aria-labelledby="range-slider"
                 />
-                {topActions}
+                {props.notOptions ? '' : topActions}
                 {bottomWrap}
             </div>
         </FormControl>
@@ -139,19 +148,24 @@ InputRange.defaultProps = {
     margin: 0,
     required: false,
     min: 0,
-    max: 100,
     value: [0],
+    sizeOption: '',
+    style: {},
+    notOptions: false,
 };
 InputRange.propTypes = {
+    notOptions: PropTypes.bool,
     sizeOption: PropTypes.string,
     fullWidth: PropTypes.bool,
     size: PropTypes.string,
+    style: PropTypes.object,
     min: (props) => {
         if (typeof props.min === 'number') {
-            if (props.value.some(e => e < props.min)) throw new Error('Minimum value can\'t be smaller than value')
+            if (props.value.some(e => e < props.min)) throw new Error('Value can\'t be smaller than Min value')
         } else throw new Error('Minimum value must be Number')
     },
-    max: PropTypes.number,
+    step: PropTypes.number.isRequired,
+    max: PropTypes.number.isRequired,
     change: PropTypes.func,
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     errors: PropTypes.string,
@@ -162,5 +176,6 @@ InputRange.propTypes = {
     disabled: PropTypes.bool,
     margin: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
     value: PropTypes.array,
+    resetValue: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
 };
 export default React.memo(InputRange);
